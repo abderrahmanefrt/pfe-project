@@ -8,11 +8,7 @@ import Medecin from "../models/Medecin.js";
  * @route POST /api/avis
  * @access Patient
  */
-export const createAvis = asyncHandler(async (req, res) => {
-  console.log("Requête reçue :", req.body);
-  console.log("Type de req.user.id :", typeof req.user.id, req.user.id);
-  console.log("Type de req.body.medecinId :", typeof req.body.medecinId, req.body.medecinId);
-  
+export const createAvis = asyncHandler(async (req, res) => {  
   const { medecinId, note, commentaire } = req.body; 
   const medecinExiste = await Medecin.findByPk(medecinId);
 

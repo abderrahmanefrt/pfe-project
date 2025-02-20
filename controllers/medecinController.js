@@ -3,13 +3,11 @@ import bcrypt from "bcrypt";
 import Medecin from "../models/Medecin.js";
 
 
-export const getMedcs = asyncHandler(async (req, res) => {
-  const medecins = await Medecin.findAll();
-  res.status(200).json(medecins);
-});
 
 export const getMedc = asyncHandler(async (req, res) => {
-  const medecin = await Medecin.findByPk(req.params.id);
+
+  const medecin = await Medecin.findByPk(req.params.id,
+    {attributes: { exclude: ["password"] }});
   if (!medecin) {
     res.status(404);
     throw new Error("Médecin non trouvé");

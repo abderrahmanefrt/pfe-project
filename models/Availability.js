@@ -1,13 +1,14 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
-import Medecin from "./Medecin.js"; //
+import Medecin from "./Medecin.js"; 
 
 const Availability = sequelize.define("Availability", {
   id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  
   medecinId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -22,13 +23,14 @@ const Availability = sequelize.define("Availability", {
     allowNull: false,
   },
   heureDebut: {
-    type: DataTypes.TIME,
+    type: DataTypes.STRING,
     allowNull: false,
   },
   heureFin: {
-    type: DataTypes.TIME,
+    type: DataTypes.STRING,
     allowNull: false,
   },
+  
 });
 
 

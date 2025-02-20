@@ -1,19 +1,19 @@
 import express from "express";
 import {
-  getUsers,
+  
   getUser,
-  createUser,
-  updateUser,
-  deleteUser,
+  updateProfile,
+  updatePassword,
+  deleteMyAccount,
 } from "../controllers/usercontroller.js";
-
+import { protect } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
-router.get("/", getUsers);
-router.get("/:id", getUser);
-router.post("/", createUser);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+
+router.get("/me", protect,getUser);
+router.put("/profile",protect, updateProfile);
+router.put("/password", protect, updatePassword);
+router.delete("/deletemyaccount", protect, deleteMyAccount);
 
 
 

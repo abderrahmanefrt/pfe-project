@@ -1,63 +1,79 @@
 import asyncHandler from "express-async-handler";
-
+import bcrypt from "bcrypt";
 import User from "../models/Users.js";
 
 
 
-export const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.findAll();
-  res.status(200).json(users);
-});
 
 
 export const getUser = asyncHandler(async (req, res) => {
-  const user = await User.findByPk(req.params.id);
+  const user = await User.findByPk(req.user.id, {
+    attributes: { exclude: ["password"] }, 
+  });
+
   if (!user) {
-    res.status(404).json({ message: "Utilisateur non trouvé" });
-  } else {
-    res.status(200).json(user);
-  }
-});
-
-
-export const createUser = asyncHandler(async (req, res) => {
-  const { name, email, phone, password } = req.body;
-
-  if (!name || !email || !phone || !password) {
-    res.status(400).json({ message: "Tous les champs sont requis" });
-    return;
+    return res.status(404).json({ message: "Utilisateur non trouvé" });
   }
 
-  const existingUser = await User.findOne({ where: { email } });
-
-  if (existingUser) {
-    res.status(400).json({ message: "L'utilisateur existe déjà" });
-    return;
-  }
-
-  const newUser = await User.create({ name, email, phone, password });
-  res.status(201).json(newUser);
-});
-
-
-export const updateUser = asyncHandler(async (req, res) => {
-  const user = await User.findByPk(req.params.id);
-  if (!user) {
-    res.status(404).json({ message: "Utilisateur non trouvé" });
-    return;
-  }
-
-  await user.update(req.body);
   res.status(200).json(user);
 });
 
-export const deleteUser = asyncHandler(async (req, res) => {
-  const user = await User.findByPk(req.params.id);
+//update profile user
+/**
+ * @desc Modifier le profil du médecin
+ * @route PUT /api/users/profile
+ * @access user (authentifié)
+ */
+export const updateProfile = asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.user.id);
+  
   if (!user) {
-    res.status(404).json({ message: "Utilisateur non trouvé" });
-    return;
+    res.status(404);
+    throw new Error("User non trouvé");
+  }
+
+  const { name, email, phone } = req.body;
+  user.name = name || user.name;
+  user.email = email || user.email;
+  user.phone = phone || user.phone;
+  await user.save();
+  res.status(200).json({ message: "Profil mis à jour avec succès", user });
+});
+
+/**
+ * @desc Changer le mot de passe
+ * @route PUT /api/users/password
+ * @access users (authentifié)
+ */
+export const updatePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const user = await User.findByPk(req.user.id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("user non trouvé");
+  }
+
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isMatch) {
+    res.status(400);
+    throw new Error("Ancien mot de passe incorrect");
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  res.status(200).json({ message: "Mot de passe mis à jour avec succès" });
+});
+
+export const deleteMyAccount = asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.user.id);
+
+  if (!user) {
+    return res.status(404).json({ message: "Compte non trouvé." });
   }
 
   await user.destroy();
-  res.status(200).json({ message: "Utilisateur supprimé" });
+  
+  res.status(200).json({ message: "Compte supprimé avec succès." });
 });
