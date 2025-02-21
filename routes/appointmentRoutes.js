@@ -7,14 +7,16 @@ import {
   deleteAppointment,
   approveAppointment,
   rejectAppointment,
+  getMedecinAppointments,
+  updateAppointmentStatus,
 } from "../controllers/appointmentController.js";
-import { protect, admin } from "../middlewares/authMiddleware.js";
+import { protect, admin,protectMedecin ,patientOrAdmin} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/", protect, createAppointment);
-router.get("/", protect, admin, getAllAppointments);
-router.get("/:id", protect, getAppointmentById);
+router.get("/", protect, patientOrAdmin, getAllAppointments);
+
 router.put("/:id", protect, updateAppointment);
 router.delete("/:id", protect, deleteAppointment);
 
@@ -22,4 +24,7 @@ router.delete("/:id", protect, deleteAppointment);
 router.put("/:id/approve", protect, admin, approveAppointment);
 router.put("/:id/reject", protect, admin, rejectAppointment);
 
+router.get("/medecin", protectMedecin, getMedecinAppointments);
+router.get("/:id", protect, getAppointmentById);
+router.put("/:id/status", protectMedecin, updateAppointmentStatus);
 export default router;

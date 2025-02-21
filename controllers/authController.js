@@ -47,7 +47,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const token = jwt.sign(
-    { id: user.id, email: user.email },
+    { id: user.id, email: user.email ,role: user.role,},
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -100,9 +100,12 @@ export const loginMedecin = asyncHandler(async (req, res) => {
   const medecin = await Medecin.findOne({ where: { email } });
 
   if (medecin && (await bcrypt.compare(password, medecin.password))) {
-    const token = jwt.sign({ id: medecin.id, email: medecin.email }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    
+    const token = jwt.sign(
+      { id: medecin.id, email: medecin.email, role: "medecin" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({
       id: medecin.id,

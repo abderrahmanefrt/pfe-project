@@ -11,7 +11,7 @@ import Medecin from "../models/Medecin.js";
 export const createAppointment = asyncHandler(async (req, res) => {
   const { userId, medecinId, date, time } = req.body;
 
-  // Vérifier que tous les champs requis sont présents
+
   if (!userId || !medecinId || !date || !time) {
     return res.status(400).json({ message: "Tous les champs sont requis" });
   }
@@ -24,18 +24,18 @@ export const createAppointment = asyncHandler(async (req, res) => {
   const medecin = await Medecin.findByPk(medecinId);
   if (!medecin) return res.status(404).json({ message: "Médecin non trouvé" });
 
-  // Vérifier si le médecin est approuvé
+
   if (medecin.status !== "approved") {
     return res.status(403).json({ message: "Ce médecin n'est pas encore approuvé" });
   }
 
-  // Vérifier si un rendez-vous existe déjà pour ce créneau
+
   const existingAppointment = await Appointment.findOne({ where: { medecinId, date, time } });
   if (existingAppointment) {
     return res.status(400).json({ message: "Ce créneau est déjà réservé" });
   }
 
-  // Créer le rendez-vous
+
   const newAppointment = await Appointment.create({ userId, medecinId, date, time });
 
   res.status(201).json({ message: "Rendez-vous créé avec succès", appointment: newAppointment });
@@ -48,14 +48,27 @@ export const createAppointment = asyncHandler(async (req, res) => {
  * @access Private (Admin)
  */
 export const getAllAppointments = asyncHandler(async (req, res) => {
-  const appointments = await Appointment.findAll({
-    include: [
-      { model: User, attributes: ["id", "name", "email"] },
-      { model: Medecin, attributes: ["id", "name", "specialite"] },
-    ],
-  });
+  let appointments;
+
+  if (req.isPatient) {
+    // Si c'est un patient, récupérer uniquement SES rendez-vous
+    appointments = await Appointment.findAll({
+      where: { userId: req.user.id },
+      include: [{ model: Medecin, attributes: ["id", "name", "specialite"] }],
+    });
+  } else {
+    // Sinon, récupérer TOUS les rendez-vous (pour l'admin)
+    appointments = await Appointment.findAll({
+      include: [
+        { model: User, attributes: ["id", "name", "email"] },
+        { model: Medecin, attributes: ["id", "name", "specialite"] },
+      ],
+    });
+  }
+
   res.status(200).json(appointments);
 });
+
 
 /**  
  * @desc Get a single appointment
@@ -63,7 +76,9 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
  * @access Private (User/Admin)
  */
 export const getAppointmentById = asyncHandler(async (req, res) => {
+  
   const { id } = req.params;
+  
   const appointment = await Appointment.findByPk(id, {
     include: [
       { model: User, attributes: ["id", "name", "email"] },
@@ -159,3 +174,47 @@ export const deleteAppointment = asyncHandler(async (req, res) => {
   await appointment.destroy();
   res.status(200).json({ message: "Appointment successfully canceled." });
 });
+
+export const getMedecinAppointments =asyncHandler(async(req,res)=>{
+
+  const medecinId=req.user.id;
+  const appointments = await Appointment.findAll({
+    where: { medecinId },
+    include: [
+      { model: User, attributes: ["id", "name", "email"] },
+    ],
+  });
+
+  res.status(200).json(appointments);
+});
+
+/**  
+ * @desc Accept or reject an appointment (Medecin only)
+ * @route PUT /api/appointments/:id/status
+ * @access Private (Medecin)
+ */
+export const updateAppointmentStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const medecinId = req.user.id;
+
+  const appointment = await Appointment.findByPk(id);
+
+  if (!appointment) {
+    return res.status(404).json({ message: "Rendez-vous non trouvé." });
+  }
+
+  if (appointment.medecinId !== medecinId) {
+    return res.status(403).json({ message: "Accès refusé." });
+  }
+
+  if (!["accepter", "refuser"].includes(status)) {
+    return res.status(400).json({ message: "Statut invalide." });
+  }
+
+  appointment.status = status;
+  await appointment.save();
+
+  res.status(200).json({ message: `Rendez-vous ${status} avec succès.`, appointment });
+});
+
