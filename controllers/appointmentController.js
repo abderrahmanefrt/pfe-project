@@ -51,13 +51,12 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
   let appointments;
 
   if (req.isPatient) {
-    // Si c'est un patient, récupérer uniquement SES rendez-vous
     appointments = await Appointment.findAll({
       where: { userId: req.user.id },
       include: [{ model: Medecin, attributes: ["id", "name", "specialite"] }],
     });
   } else {
-    // Sinon, récupérer TOUS les rendez-vous (pour l'admin)
+    
     appointments = await Appointment.findAll({
       include: [
         { model: User, attributes: ["id", "name", "email"] },

@@ -15,7 +15,7 @@ import { protect, admin,protectMedecin ,patientOrAdmin} from "../middlewares/aut
 const router = express.Router();
 
 router.post("/", protect, createAppointment);
-router.get("/", protect, patientOrAdmin, getAllAppointments);
+router.get("/", protect, patientOrAdmin, getAllAppointments); //vois les render vous
 
 router.put("/:id", protect, updateAppointment);
 router.delete("/:id", protect, deleteAppointment);

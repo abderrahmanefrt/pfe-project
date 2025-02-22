@@ -8,6 +8,8 @@ import appointmentRoutes from "./routes/appointmentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import avisRoutes from "./routes/avisRoutes.js";
+import availabilityRoutes from "./routes/availabilityRoutes.js";
+
 import "./models/relations.js";
 
 dotenv.config(); 
@@ -21,6 +23,7 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/medecin", medRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/disponibilites", availabilityRoutes);
 
 app.use("/api/avis", avisRoutes);
 

@@ -11,7 +11,7 @@ import {
   getDisponibilites,
   updateDisponibilite,
   deleteDisponibilite,
-} from "../controllers/disponibiliteController.js";
+} from "../controllers/availabilityController.js";
 
 
 const router = express.Router();

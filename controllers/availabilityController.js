@@ -4,24 +4,23 @@ import { Op } from "sequelize";
 
 export const addDisponibilite = asyncHandler(async (req, res) => {
   const { jour, heureDebut, heureFin } = req.body;
-  const medecinId = req.user.id; // ID from token
+  const medecinId = req.user.id; 
 
   if (!jour || !heureDebut || !heureFin) {
     return res.status(400).json({ message: "Tous les champs sont obligatoires." });
   }
 
-  // Validation du format de l'heure (HH:MM)
   const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
   if (!timeRegex.test(heureDebut) || !timeRegex.test(heureFin)) {
     return res.status(400).json({ message: "Le format de l'heure doit être HH:MM" });
   }
 
-  // Vérifier que l'heure de début est bien avant l'heure de fin
+
   if (heureDebut >= heureFin) {
     return res.status(400).json({ message: "L'heure de début doit être avant l'heure de fin." });
   }
 
-  // Vérifier qu'il n'y a pas de chevauchement de créneaux
+
   const overlap = await Availability.findOne({
     where: {
       medecinId,
@@ -73,3 +72,23 @@ export const deleteDisponibilite = asyncHandler(async (req, res) => {
   await disponibilite.destroy();
   res.status(200).json({ message: "Disponibilité supprimée avec succès." });
 });
+
+export const getDisponibilitesByMedecin = asyncHandler(async (req, res) => {
+  const { medecinId } = req.params;
+
+  if (!medecinId) {
+    return res.status(400).json({ message: "L'ID du médecin est requis." });
+  }
+
+  const disponibilites = await Availability.findAll({ 
+    where: { medecinId }, 
+    order: [["jour", "ASC"], ["heureDebut", "ASC"]] 
+  });
+
+  if (!disponibilites.length) {
+    return res.status(404).json({ message: "Aucune disponibilité trouvée pour ce médecin." });
+  }
+
+  res.status(200).json(disponibilites);
+});
+
