@@ -6,7 +6,7 @@ import Medecin from "../models/Medecin.js";
 
 export const getMedc = asyncHandler(async (req, res) => {
 
-  const medecin = await Medecin.findByPk(req.params.id,
+  const medecin = await Medecin.findByPk(req.user.id,
     {attributes: { exclude: ["password"] }});
   if (!medecin) {
     res.status(404);
