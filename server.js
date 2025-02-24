@@ -9,6 +9,7 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import avisRoutes from "./routes/avisRoutes.js";
 import availabilityRoutes from "./routes/availabilityRoutes.js";
+import upload from "./middlewares/uploads.js";
 
 import "./models/relations.js";
 
@@ -24,6 +25,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/medecin", medRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/disponibilites", availabilityRoutes);
+app.use("/uploads", express.static("uploads"));
 
 app.use("/api/avis", avisRoutes);
 

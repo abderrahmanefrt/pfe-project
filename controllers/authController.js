@@ -66,12 +66,11 @@ export const loginUser = asyncHandler(async (req, res) => {
 //Medecin
 
 //register medecin
-
 export const registerMedecin = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, specialite, document } = req.body; 
+  const { name, email, phone, password, specialite } = req.body;
 
-  if (!document) {
-    return res.status(400).json({ message: "Le document est obligatoire" });
+  if (!req.file) {
+    return res.status(400).json({ message: "Le document PDF est obligatoire" });
   }
 
   const existingMedecin = await Medecin.findOne({ where: { email } });
@@ -87,11 +86,12 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     phone,
     password: hashedPassword,
     specialite,
-    document, 
+    document: req.file.path,
   });
 
   res.status(201).json({ message: "Médecin créé avec succès", medecin: newMedecin });
 });
+
 
 //login medecin
 export const loginMedecin = asyncHandler(async (req, res) => {

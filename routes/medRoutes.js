@@ -35,4 +35,8 @@ router.delete("/disponibilites/:id", protectMedecin, deleteDisponibilite);
 
 
 
+
+
+
+
 export default router;
