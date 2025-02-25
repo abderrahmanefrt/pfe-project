@@ -118,3 +118,6 @@ export const loginMedecin = asyncHandler(async (req, res) => {
     res.status(401).json({ message: "Email ou mot de passe incorrect" });
   }
 });
+
+
+
