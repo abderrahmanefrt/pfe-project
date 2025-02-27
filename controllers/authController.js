@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/Users.js";
 import Medecin from "../models/Medecin.js";
+import { sendEmail } from "../utils/email.js"
+
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, phone, password } = req.body;
@@ -18,6 +20,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     res.status(400).json({ message: "L'utilisateur existe déjà" });
     return;
   }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const newUser = await User.create({ 
@@ -27,8 +30,11 @@ export const registerUser = asyncHandler(async (req, res) => {
     password: hashedPassword  
   });
 
+  await sendEmail(email, name);
+
   res.status(201).json({ message: "Utilisateur créé avec succès", user: newUser });
 });
+
 
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
