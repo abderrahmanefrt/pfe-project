@@ -25,3 +25,25 @@ export const sendEmail = async (to, subject="inscription sur la platforme", name
     console.error("❌ Erreur d'envoi d'email :", error);
   }
 };
+export const sendEmailapp = async (
+  to,
+  subject = "Confirmation de rendez-vous",
+  name = "patient",
+  date,
+  time,
+  doctorName
+) => {
+  try {
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: to,
+      subject: subject,
+      text: `Bonjour ${name},\n\nVotre rendez  avec le Dr. ${doctorName}  pour le ${date} à ${time}  est enregistrer  .\n\nSi vous avez des questions, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe de support`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email envoyé :", info.response);
+  } catch (error) {
+    console.error("❌ Erreur d'envoi d'email :", error);
+  }
+};
