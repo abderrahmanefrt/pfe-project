@@ -32,7 +32,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
   const newAppointment = await Appointment.create({ userId, medecinId, date, time });
 
-  // Envoyer un email de confirmation au patient
+
   try {
     await sendEmailapp(
       user.email, // Email du patient
