@@ -34,6 +34,10 @@ const Medecin = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false, 
     },
+    photo: {
+      type: DataTypes.STRING(255), // Stocke le chemin de l'image
+      allowNull: true,
+    },
     status: {
       type: DataTypes.STRING(50),
       defaultValue: "pending",

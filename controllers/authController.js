@@ -77,7 +77,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 export const registerMedecin = asyncHandler(async (req, res) => {
   const { name, email, phone, password, specialite } = req.body;
 
-  if (!req.file) {
+  if (!req.files || !req.files["document"]) {
     return res.status(400).json({ message: "Le document PDF est obligatoire" });
   }
 
@@ -94,11 +94,13 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     phone,
     password: hashedPassword,
     specialite,
-    document: req.file.path,
+    document: req.files["document"][0].path, 
+    photo: req.files["photo"] ? req.files["photo"][0].path : null, 
   });
 
   res.status(201).json({ message: "Médecin créé avec succès", medecin: newMedecin });
 });
+
 
 
 //login medecin
