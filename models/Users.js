@@ -25,6 +25,10 @@ const User = sequelize.define("User", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  gender: {
+    type: DataTypes.ENUM("homme", "femme", ),
+    allowNull: false,
+  },
   role: {
     type: DataTypes.ENUM("admin", "medecin", "user"),
     allowNull: false,
@@ -35,6 +39,6 @@ const User = sequelize.define("User", {
     allowNull: false,
     defaultValue: "active", 
   },
-}, { timestamps: true }); 
+}, { timestamps: true });
 
 export default User;

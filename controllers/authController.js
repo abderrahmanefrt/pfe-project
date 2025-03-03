@@ -7,9 +7,9 @@ import { sendEmail } from "../utils/email.js"
 
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, phone, password } = req.body;
+  const { name, email, phone, password, gender } = req.body;
 
-  if (!name || !email || !phone || !password) {
+  if (!name || !email || !phone || !password || !gender) {
     res.status(400).json({ message: "Tous les champs sont requis" });
     return;
   }
@@ -27,13 +27,15 @@ export const registerUser = asyncHandler(async (req, res) => {
     name, 
     email, 
     phone, 
-    password: hashedPassword  
+    password: hashedPassword,
+    gender,  
   });
 
   await sendEmail(email, name);
 
   res.status(201).json({ message: "Utilisateur créé avec succès", user: newUser });
 });
+
 
 
 export const loginUser = asyncHandler(async (req, res) => {
