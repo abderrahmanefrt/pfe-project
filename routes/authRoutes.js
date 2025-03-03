@@ -11,7 +11,7 @@ router.post("/admin-login", loginAdmin);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
-router.post("/medecin/register", upload.single("document"), registerMedecin);
+router.post("/medecin/register", upload.fields([{ name: "document" }, { name: "photo" }]), registerMedecin);
 
 router.post("/medecin/login", loginMedecin);
 
