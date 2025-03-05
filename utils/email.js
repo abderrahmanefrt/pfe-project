@@ -47,3 +47,23 @@ export const sendEmailapp = async (
     console.error("❌ Erreur d'envoi d'email :", error);
   }
 };
+export const sendEmailmed = async (
+  to,
+  subject = "Notification",
+  name = "Utilisateur",
+  message = "Vous avez une nouvelle notification."
+) => {
+  try {
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: to,
+      subject: subject,
+      text: `Bonjour ${name},\n\n${message}\n\nCordialement,\nL'équipe de support`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email envoyé :", info.response);
+  } catch (error) {
+    console.error("❌ Erreur d'envoi d'email :", error);
+  }
+};
