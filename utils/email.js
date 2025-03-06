@@ -67,3 +67,18 @@ export const sendEmailmed = async (
     console.error("❌ Erreur d'envoi d'email :", error);
   }
 };
+export const sendEmailrap = async (to, subject, text) => {
+  try {
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: to,
+      subject: subject,
+      text: text,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email envoyé :", info.response);
+  } catch (error) {
+    console.error("❌ Erreur d'envoi d'email :", error);
+  }
+};

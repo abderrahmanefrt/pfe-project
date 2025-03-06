@@ -10,6 +10,8 @@ import adminRoutes from "./routes/adminRoutes.js";
 import avisRoutes from "./routes/avisRoutes.js";
 import availabilityRoutes from "./routes/availabilityRoutes.js";
 import upload from "./middlewares/uploads.js";
+import "./utils/cronJobs.js";
+
 
 import "./models/relations.js";
 
