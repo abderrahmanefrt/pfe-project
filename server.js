@@ -11,6 +11,7 @@ import avisRoutes from "./routes/avisRoutes.js";
 import availabilityRoutes from "./routes/availabilityRoutes.js";
 import upload from "./middlewares/uploads.js";
 import "./utils/cronJobs.js";
+import cors  from "cors";
 
 
 import "./models/relations.js";
@@ -19,6 +20,9 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+//for front end
+app.use(cors({ origin: 'http://localhost:5173' }));
+
 
 app.use(express.json());
 

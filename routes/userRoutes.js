@@ -5,7 +5,7 @@ import {
   updateProfile,
   updatePassword,
   deleteMyAccount,
-} from "../controllers/usercontroller.js";
+} from "../controllers/userController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
