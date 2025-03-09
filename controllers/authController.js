@@ -7,9 +7,9 @@ import { sendEmail } from "../utils/email.js"
 
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, gender } = req.body;
+  const { name, email, phone, password, gender, dateOfBirth } = req.body;
 
-  if (!name || !email || !phone || !password || !gender) {
+  if (!name || !email || !phone || !password || !gender || !dateOfBirth) {
     res.status(400).json({ message: "Tous les champs sont requis" });
     return;
   }
@@ -29,6 +29,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     phone, 
     password: hashedPassword,
     gender,  
+    dateOfBirth, 
   });
 
   await sendEmail(email, name);
@@ -75,18 +76,32 @@ export const loginUser = asyncHandler(async (req, res) => {
 
 //register medecin
 export const registerMedecin = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, specialite } = req.body;
+  const { name, email, phone, password, specialite, dateOfBirth, licenseNumber } = req.body;
+
+
+  if (!name || !email || !phone || !password || !specialite || !dateOfBirth || !licenseNumber) {
+    return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+  }
+
 
   if (!req.files || !req.files["document"]) {
     return res.status(400).json({ message: "Le document PDF est obligatoire" });
   }
+
+
+  if (!req.files["photo"]) {
+    return res.status(400).json({ message: "La photo est obligatoire" });
+  }
+
 
   const existingMedecin = await Medecin.findOne({ where: { email } });
   if (existingMedecin) {
     return res.status(400).json({ message: "Le médecin existe déjà" });
   }
 
+
   const hashedPassword = await bcrypt.hash(password, 10);
+
 
   const newMedecin = await Medecin.create({
     name,
@@ -94,13 +109,15 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     phone,
     password: hashedPassword,
     specialite,
+    dateOfBirth,
+    licenseNumber,
     document: req.files["document"][0].path, 
-    photo: req.files["photo"] ? req.files["photo"][0].path : null, 
+    photo: req.files["photo"][0].path, 
   });
 
+  
   res.status(201).json({ message: "Médecin créé avec succès", medecin: newMedecin });
 });
-
 
 
 //login medecin

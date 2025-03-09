@@ -32,11 +32,19 @@ export const updateProfile = asyncHandler(async (req, res) => {
     throw new Error("User non trouvé");
   }
 
-  const { name, email, phone } = req.body;
+  
+  const { name, email, phone, dateOfBirth } = req.body;
+
+  
   user.name = name || user.name;
   user.email = email || user.email;
   user.phone = phone || user.phone;
+  user.dateOfBirth = dateOfBirth || user.dateOfBirth; 
+
+  
   await user.save();
+
+  
   res.status(200).json({ message: "Profil mis à jour avec succès", user });
 });
 

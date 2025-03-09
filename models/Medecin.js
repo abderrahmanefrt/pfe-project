@@ -29,14 +29,24 @@ const Medecin = sequelize.define(
     },
     specialite: {
       type: DataTypes.STRING(100),
+      allowNull: false, 
+    },
+    dateOfBirth: {
+      type: DataTypes.DATEONLY, 
+      allowNull: false, 
+    },
+    licenseNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true, 
     },
     document: {
       type: DataTypes.STRING(255),
       allowNull: false, 
     },
     photo: {
-      type: DataTypes.STRING(255), // Stocke le chemin de l'image
-      allowNull: true,
+      type: DataTypes.STRING(255), 
+      allowNull: false, 
     },
     status: {
       type: DataTypes.STRING(50),
@@ -53,7 +63,7 @@ const Medecin = sequelize.define(
   },
   {
     tableName: "Medecins",
-    timestamps: false, 
+    timestamps: false,
   }
 );
 

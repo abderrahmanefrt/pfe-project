@@ -29,17 +29,24 @@ export const updateProfile = asyncHandler(async (req, res) => {
     throw new Error("Médecin non trouvé");
   }
 
-  const { name, email, phone, specialite } = req.body;
+
+  const { name, email, phone, specialite, dateOfBirth, licenseNumber } = req.body;
+
+
   medecin.name = name || medecin.name;
   medecin.email = email || medecin.email;
   medecin.phone = phone || medecin.phone;
   medecin.specialite = specialite || medecin.specialite;
+  medecin.dateOfBirth = dateOfBirth || medecin.dateOfBirth; 
+  medecin.licenseNumber = licenseNumber || medecin.licenseNumber; 
 
+
+  
   await medecin.save();
+
+  
   res.status(200).json({ message: "Profil mis à jour avec succès", medecin });
 });
-
-
 /**
  * @desc Changer le mot de passe
  * @route PUT /api/medecins/password
