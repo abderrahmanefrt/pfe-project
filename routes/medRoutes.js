@@ -20,10 +20,6 @@ router.put("/profile", protectMedecin, updateProfile);
 router.put("/password", protectMedecin, updatePassword);
 router.delete("/deletemyaccount", protectMedecin, deleteMyAccount);
 
-
-
-
-
 router.post("/disponibilites", protectMedecin, addDisponibilite);
 
 router.get("/disponibilites", protectMedecin, getDisponibilites);

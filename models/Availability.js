@@ -18,22 +18,19 @@ const Availability = sequelize.define("Availability", {
     },
     onDelete: "CASCADE",
   },
-  jour: {
-    type: DataTypes.ENUM("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"),
+  date: {
+    type: DataTypes.STRING, 
     allowNull: false,
   },
-  heureDebut: {
+  startTime: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  heureFin: {
+  endTime: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   
 });
 
-
-
 export default Availability;
-

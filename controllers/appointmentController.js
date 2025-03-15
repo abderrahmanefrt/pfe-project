@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import Appointment from "../models/Appointment.js";
 import User from "../models/Users.js";
 import Medecin from "../models/Medecin.js";
+import Availability from "../models/Availability.js";
 import { sendEmailapp } from "../utils/email.js"
 /**  
  * @desc Create an appointment (Only for users)
@@ -25,30 +26,53 @@ export const createAppointment = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Ce médecin n'est pas encore approuvé" });
   }
 
-  const existingAppointment = await Appointment.findOne({ where: { medecinId, date, time } });
-  if (existingAppointment) {
-    return res.status(400).json({ message: "Ce créneau est déjà réservé" });
+  // Vérifier la disponibilité du médecin
+  console.log("Availability model:", Availability);
+  const existingAvailability = await Availability.findOne({
+    where: { medecinId, date },
+  });
+
+  if (!existingAvailability) {
+    return res.status(400).json({ message: "Aucune disponibilité trouvée pour cette date" });
+  }
+  console.log(existingAvailability.date);
+
+  // Vérifier si l'heure du rendez-vous est dans la plage de disponibilité
+  const isWithinSchedule =
+    time >= existingAvailability.startTime && time <= existingAvailability.endTime;
+
+  if (!isWithinSchedule) {
+    return res.status(400).json({ message: "L'heure choisie n'est pas dans la plage horaire du médecin." });
   }
 
+  // Vérifier si un autre rendez-vous est déjà pris
+  const existingAppointment = await Appointment.findOne({ where: { medecinId, date, time } });
+  if (existingAppointment) {
+    return res.status(400).json({ message: "Ce créneau est déjà réservé." });
+  }
+
+  // Création du rendez-vous
   const newAppointment = await Appointment.create({ userId, medecinId, date, time });
 
-
+  // Envoi de l'email de confirmation
   try {
     await sendEmailapp(
-      user.email, // Email du patient
-      "Confirmation de rendez-vous", // Sujet de l'email
-      user.name, // Nom du patient
-      date, // Date du rendez-vous
-      time, // Heure du rendez-vous
-      medecin.name // Nom du médecin
+      user.email,
+      "Confirmation de rendez-vous",
+      user.name,
+      date,
+      time,
+      medecin.name
     );
     console.log("✅ Email de confirmation envoyé au patient");
   } catch (error) {
-    console.error("❌ Erreur lors de l'envoi de l'email de confirmation :", error);
+    console.error("❌ Erreur lors de l'envoi de l'email :", error);
   }
 
   res.status(201).json({ message: "Rendez-vous créé avec succès", appointment: newAppointment });
 });
+
+
 
 /**  
  * @desc Get all appointments (Admin only)

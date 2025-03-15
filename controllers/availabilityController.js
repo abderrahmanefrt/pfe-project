@@ -3,31 +3,29 @@ import Availability from "../models/Availability.js";
 import { Op } from "sequelize";
 
 export const addDisponibilite = asyncHandler(async (req, res) => {
-  const { jour, heureDebut, heureFin } = req.body;
+  const { date, startTime, endTime } = req.body;
   const medecinId = req.user.id; 
 
-  if (!jour || !heureDebut || !heureFin) {
+  if (!date || !startTime || !endTime) {
     return res.status(400).json({ message: "Tous les champs sont obligatoires." });
   }
 
   const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-  if (!timeRegex.test(heureDebut) || !timeRegex.test(heureFin)) {
+  if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
     return res.status(400).json({ message: "Le format de l'heure doit être HH:MM" });
   }
 
-
-  if (heureDebut >= heureFin) {
+  if (startTime >= endTime) {
     return res.status(400).json({ message: "L'heure de début doit être avant l'heure de fin." });
   }
-
 
   const overlap = await Availability.findOne({
     where: {
       medecinId,
-      jour,
+      date,
       [Op.or]: [
-        { heureDebut: { [Op.between]: [heureDebut, heureFin] } },
-        { heureFin: { [Op.between]: [heureDebut, heureFin] } }
+        { startTime: { [Op.between]: [startTime, endTime] } },
+        { endTime: { [Op.between]: [startTime, endTime] } }
       ]
     }
   });
@@ -36,7 +34,7 @@ export const addDisponibilite = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Un créneau existe déjà dans cette plage horaire." });
   }
 
-  const disponibilite = await Availability.create({ medecinId, jour, heureDebut, heureFin });
+  const disponibilite = await Availability.create({ medecinId, date, startTime, endTime });
 
   res.status(201).json({ message: "Disponibilité ajoutée avec succès.", disponibilite });
 });
@@ -47,16 +45,16 @@ export const getDisponibilites = asyncHandler(async (req, res) => {
 });
 
 export const updateDisponibilite = asyncHandler(async (req, res) => {
-  const { jour, heureDebut, heureFin } = req.body;
+  const { date, startTime, endTime } = req.body;
   const disponibilite = await Availability.findByPk(req.params.id);
 
   if (!disponibilite || disponibilite.medecinId !== req.user.id) {
     return res.status(404).json({ message: "Disponibilité non trouvée." });
   }
 
-  disponibilite.jour = jour || disponibilite.jour;
-  disponibilite.heureDebut = heureDebut || disponibilite.heureDebut;
-  disponibilite.heureFin = heureFin || disponibilite.heureFin;
+  disponibilite.date = date || disponibilite.date;
+  disponibilite.startTime = startTime || disponibilite.startTime;
+  disponibilite.endTime = endTime || disponibilite.endTime;
 
   await disponibilite.save();
   res.status(200).json({ message: "Disponibilité mise à jour avec succès.", disponibilite });
@@ -82,7 +80,7 @@ export const getDisponibilitesByMedecin = asyncHandler(async (req, res) => {
 
   const disponibilites = await Availability.findAll({ 
     where: { medecinId }, 
-    order: [["jour", "ASC"], ["heureDebut", "ASC"]] 
+    order: [["date", "ASC"], ["startTime", "ASC"]] 
   });
 
   if (!disponibilites.length) {
@@ -91,4 +89,3 @@ export const getDisponibilitesByMedecin = asyncHandler(async (req, res) => {
 
   res.status(200).json(disponibilites);
 });
-
