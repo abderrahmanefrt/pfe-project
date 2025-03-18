@@ -5,4 +5,5 @@ const router = express.Router();
 
 router.get("/:medecinId", getDisponibilitesByMedecin);
 
+
 export default router;

@@ -28,22 +28,30 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
   // Vérifier la disponibilité du médecin
   console.log("Availability model:", Availability);
-  const existingAvailability = await Availability.findOne({
+  const availabilities = await Availability.findAll({
     where: { medecinId, date },
   });
 
-  if (!existingAvailability) {
+  if (!availabilities || availabilities.length === 0) {
     return res.status(400).json({ message: "Aucune disponibilité trouvée pour cette date" });
   }
-  console.log(existingAvailability.date);
 
-  // Vérifier si l'heure du rendez-vous est dans la plage de disponibilité
-  const isWithinSchedule =
-    time >= existingAvailability.startTime && time <= existingAvailability.endTime;
+  console.log("🔎 Vérification des disponibilités du médecin :");
+  availabilities.forEach(avail => {
+    console.log(`📅 Date: ${avail.date}, ⏳ StartTime: ${avail.startTime}, ⌛ EndTime: ${avail.endTime}`);
+  });
 
-  if (!isWithinSchedule) {
+  // Vérifier si l'heure demandée est dans l'un des créneaux disponibles
+  const isAvailable = availabilities.some(avail =>
+    new Date(`1970-01-01T${time}Z`) >= new Date(`1970-01-01T${avail.startTime}Z`) &&
+    new Date(`1970-01-01T${time}Z`) <= new Date(`1970-01-01T${avail.endTime}Z`)
+  );
+
+  if (!isAvailable) {
     return res.status(400).json({ message: "L'heure choisie n'est pas dans la plage horaire du médecin." });
   }
+
+  console.log("✅ L'heure demandée est bien dans la plage horaire du médecin");
 
   // Vérifier si un autre rendez-vous est déjà pris
   const existingAppointment = await Appointment.findOne({ where: { medecinId, date, time } });
@@ -71,6 +79,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
   res.status(201).json({ message: "Rendez-vous créé avec succès", appointment: newAppointment });
 });
+
 
 
 
