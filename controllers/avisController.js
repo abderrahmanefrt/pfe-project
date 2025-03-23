@@ -2,6 +2,8 @@ import asyncHandler from "express-async-handler";
 import Avis from "../models/Avis.js";
 import Appointment from "../models/Appointment.js";
 import Medecin from "../models/Medecin.js";
+import User from "../models/Users.js";
+
 
 /**
  * @desc Laisser un avis sur un médecin

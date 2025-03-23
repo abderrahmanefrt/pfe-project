@@ -29,7 +29,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     phone, 
     password: hashedPassword,
     gender,  
-    dateOfBirth, 
+    dateOfBirth: new Date(dateOfBirth), 
   });
 
   await sendEmail(email, name);

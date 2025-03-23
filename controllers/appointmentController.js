@@ -140,24 +140,58 @@ export const getAppointmentById = asyncHandler(async (req, res) => {
  */
 export const updateAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { date, time, status } = req.body;
   const userId = req.user.id;
 
   const appointment = await Appointment.findByPk(id);
   if (!appointment) {
-    return res.status(404).json({ message: "Appointment not found." });
+    return res.status(404).json({ message: "Rendez-vous non trouvé." });
   }
 
-  // User can update only their appointment, admin can approve/reject
-  if (appointment.userId !== userId && req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied." });
+  // Vérifier si c'est le patient qui veut modifier son rendez-vous
+  if (appointment.userId === userId) {
+    // Vérifier la disponibilité du médecin
+    const availabilities = await Availability.findAll({
+      where: { medecinId: appointment.medecinId, date },
+    });
+
+    if (!availabilities || availabilities.length === 0) {
+      return res.status(400).json({ message: "Aucune disponibilité trouvée pour cette date" });
+    }
+
+    const isAvailable = availabilities.some(avail =>
+      new Date(`1970-01-01T${time}Z`) >= new Date(`1970-01-01T${avail.startTime}Z`) &&
+      new Date(`1970-01-01T${time}Z`) <= new Date(`1970-01-01T${avail.endTime}Z`)
+    );
+
+    if (!isAvailable) {
+      return res.status(400).json({ message: "L'heure choisie n'est pas dans la plage horaire du médecin." });
+    }
+
+    // Vérifier si l'heure est déjà prise
+    const existingAppointment = await Appointment.findOne({
+      where: { medecinId: appointment.medecinId, date, time, id: { $ne: appointment.id } }
+    });
+
+    if (existingAppointment) {
+      return res.status(400).json({ message: "Ce créneau est déjà réservé." });
+    }
+
+    // Mettre à jour la date et l'heure
+    appointment.date = date;
+    appointment.time = time;
+  } 
+  
+  // Vérifier si l'admin peut mettre à jour le statut
+  if (req.user.role === "admin" && status) {
+    appointment.status = status;
   }
 
-  appointment.status = status;
   await appointment.save();
 
-  res.status(200).json({ message: "Appointment updated successfully.", appointment });
+  res.status(200).json({ message: "Rendez-vous mis à jour avec succès.", appointment });
 });
+
 
 /**  
  * @desc Approve an appointment (Admin only)
