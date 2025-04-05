@@ -21,34 +21,6 @@ export const getMedecinById = asyncHandler(async (req, res) => {
 });
 
 
-export const createMedecin = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, specialite, document } = req.body;
-
-  if (!name || !email || !phone || !password || !specialite || !document) {
-    res.status(400);
-    throw new Error("Tous les champs sont obligatoires");
-  }
-
-  const existingMedecin = await Medecin.findOne({ where: { email } });
-  if (existingMedecin) {
-    res.status(400);
-    throw new Error("Cet email est déjà utilisé");
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const newMedecin = await Medecin.create({
-    name,
-    email,
-    phone,
-    password: hashedPassword,
-    specialite,
-    document,
-    status: "pending", 
-  });
-
-  res.status(201).json(newMedecin);
-});
 
 
 export const updateMedecin = asyncHandler(async (req, res) => {
@@ -188,31 +160,7 @@ export const getUserById = asyncHandler(async (req, res) => {
 
 
 
-export const createUser = asyncHandler(async (req, res) => {
-  const { name, email, phone, password } = req.body;
 
-  if (!name || !email || !phone || !password) {
-    res.status(400).json({ message: "Tous les champs sont requis" });
-    return;
-  }
-
-  const existingUser = await User.findOne({ where: { email } });
-
-  if (existingUser) {
-    res.status(400).json({ message: "L'utilisateur existe déjà" });
-    return;
-  }
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const newUser = await User.create({ 
-    name, 
-    email, 
-    phone, 
-    password: hashedPassword
-  });
-
-  res.status(201).json({ message: "Utilisateur créé avec succès", user: newUser });
-});
 
 
 
