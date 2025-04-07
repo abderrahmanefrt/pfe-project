@@ -12,7 +12,7 @@ import availabilityRoutes from "./routes/availabilityRoutes.js";
 import upload from "./middlewares/uploads.js";
 import "./utils/cronJobs.js";
 import cors  from "cors";
-
+import cookieParser from "cookie-parser";
 
 import "./models/relations.js";
 
@@ -32,6 +32,7 @@ app.use("/api/medecin", medRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/disponibilites", availabilityRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use(cookieParser());
 
 app.use("/api/avis", avisRoutes);
 

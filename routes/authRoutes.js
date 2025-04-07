@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { registerUser, loginUser, registerMedecin, loginMedecin } from "../controllers/authController.js";
+import { registerUser, loginUser, registerMedecin, loginMedecin,refreshToken  } from "../controllers/authController.js";
 import { loginAdmin } from "../controllers/adminAuthController.js";
 import upload from "../middlewares/uploads.js"; 
 
@@ -10,6 +10,7 @@ router.post("/admin-login", loginAdmin);
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.get("/refresh-token", refreshToken);
 
 router.post("/medecin/register", upload.fields([{ name: "document" }, { name: "photo" }]), registerMedecin);
 

@@ -5,6 +5,13 @@ import User from "../models/Users.js";
 import Medecin from "../models/Medecin.js";
 import { sendEmail } from "../utils/email.js"
 
+const generateAccessToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
+};
+
+const generateRefreshToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+};
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, phone, password, gender, dateOfBirth } = req.body;
@@ -43,33 +50,29 @@ export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ where: { email } });
 
-  if (!user) {
-    res.status(401).json({ message: "Email ou mot de passe incorrect" });
-    return;
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ message: "Email ou mot de passe incorrect" });
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const payload = { id: user.id, email: user.email, role: user.role };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
 
-  if (!isMatch) {
-    res.status(401).json({ message: "Email ou mot de passe incorrect" });
-    return;
-  }
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false, // true en production (HTTPS)
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+  });
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email ,role: user.role,},
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-
-  
   res.json({
     id: user.id,
     name: user.name,
     email: user.email,
-    token,
+    accessToken,
   });
 });
+
 
 
 //Medecin
@@ -123,28 +126,55 @@ export const registerMedecin = asyncHandler(async (req, res) => {
 //login medecin
 export const loginMedecin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
   const medecin = await Medecin.findOne({ where: { email } });
 
-  if (medecin && (await bcrypt.compare(password, medecin.password))) {
-    
-    const token = jwt.sign(
-      { id: medecin.id, email: medecin.email, role: "medecin" },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+  if (!medecin || !(await bcrypt.compare(password, medecin.password))) {
+    return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+  }
 
-    res.json({
-      id: medecin.id,
-      name: medecin.name,
-      email: medecin.email,
-      specialite: medecin.specialite,
-      token,
+  const payload = { id: medecin.id, email: medecin.email, role: "medecin" };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.json({
+    id: medecin.id,
+    name: medecin.name,
+    email: medecin.email,
+    specialite: medecin.specialite,
+    accessToken,
+  });
+});
+
+
+
+export const refreshToken = asyncHandler(async (req, res) => {
+  const token = req.cookies.refreshToken;
+
+  if (!token) {
+    return res.status(401).json({ message: "Pas de refresh token trouvé." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const newAccessToken = generateAccessToken({
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
     });
-  } else {
-    res.status(401).json({ message: "Email ou mot de passe incorrect" });
+
+    res.json({ accessToken: newAccessToken });
+  } catch (error) {
+    res.status(403).json({ message: "Refresh token invalide ou expiré." });
   }
 });
+
 
 
 
