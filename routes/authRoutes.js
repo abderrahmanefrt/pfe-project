@@ -9,7 +9,9 @@ const router = express.Router();
 router.post("/admin-login", loginAdmin);
 
 router.post("/register", registerUser);
+
 router.post("/login", loginUser);
+//kayen 5dma f front
 router.get("/refresh-token", refreshToken);
 
 router.post("/medecin/register", upload.fields([{ name: "document" }, { name: "photo" }]), registerMedecin);
