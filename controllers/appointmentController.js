@@ -41,7 +41,6 @@ export const createAppointment = asyncHandler(async (req, res) => {
     console.log(`📅 Date: ${avail.date}, ⏳ StartTime: ${avail.startTime}, ⌛ EndTime: ${avail.endTime}`);
   });
 
-  // Vérifier si l'heure demandée est dans l'un des créneaux disponibles
   const isAvailable = availabilities.some(avail =>
     new Date(`1970-01-01T${time}Z`) >= new Date(`1970-01-01T${avail.startTime}Z`) &&
     new Date(`1970-01-01T${time}Z`) <= new Date(`1970-01-01T${avail.endTime}Z`)
@@ -67,10 +66,12 @@ export const createAppointment = asyncHandler(async (req, res) => {
     await sendEmailapp(
       user.email,
       "Confirmation de rendez-vous",
-      user.name,
+      user.firstname,
+      user.lastname,
       date,
       time,
-      medecin.name
+      medecin.firstname,
+      medecin.lastname
     );
     console.log("✅ Email de confirmation envoyé au patient");
   } catch (error) {
@@ -94,21 +95,34 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
   if (req.isPatient) {
     appointments = await Appointment.findAll({
       where: { userId: req.user.id },
-      include: [{ model: Medecin, attributes: ["id", "name", "specialite"] }],
+      include: [
+        { 
+          model: User, 
+          attributes: ["id", "firstname", "lastname", "email"] 
+        },
+        { 
+          model: Medecin, 
+          attributes: ["firstname", "lastname"]  // Seulement le prénom et le nom
+        },
+      ],
     });
   } else {
-    
     appointments = await Appointment.findAll({
       include: [
-        { model: User, attributes: ["id", "name", "email"] },
-        { model: Medecin, attributes: ["id", "name", "specialite"] },
+        { 
+          model: User, 
+          attributes: ["id", "firstname", "lastname", "email"] 
+        },
+        { 
+          model: Medecin, 
+          attributes: ["firstname", "lastname"]  // Seulement le prénom et le nom
+        },
       ],
     });
   }
 
   res.status(200).json(appointments);
 });
-
 
 /**  
  * @desc Get a single appointment
@@ -121,8 +135,8 @@ export const getAppointmentById = asyncHandler(async (req, res) => {
   
   const appointment = await Appointment.findByPk(id, {
     include: [
-      { model: User, attributes: ["id", "name", "email"] },
-      { model: Medecin, attributes: ["id", "name", "specialite"] },
+      { model: User, attributes: ["id", "firstname","lastname", "email"] },
+      { model: Medecin, attributes: ["id", "firstname","lastname", "specialite"] },
     ],
   });
 
@@ -255,7 +269,7 @@ export const getMedecinAppointments =asyncHandler(async(req,res)=>{
   const appointments = await Appointment.findAll({
     where: { medecinId },
     include: [
-      { model: User, attributes: ["id", "name", "email"] },
+      { model: User, attributes: ["id", "firstname","lastname", "email"] },
     ],
   });
 

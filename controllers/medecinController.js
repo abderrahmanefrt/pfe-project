@@ -30,15 +30,17 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
 
-  const { name, email, phone, specialite, dateOfBirth, licenseNumber } = req.body;
+  const { firstname, lastname, email, phone, specialite, dateOfBirth, licenseNumber } = req.body;
 
 
-  medecin.name = name || medecin.name;
+  medecin.firstname = firstname || medecin.firstname;
+  medecin.lastname = lastname || medecin.lastname;
   medecin.email = email || medecin.email;
   medecin.phone = phone || medecin.phone;
   medecin.specialite = specialite || medecin.specialite;
   medecin.dateOfBirth = dateOfBirth || medecin.dateOfBirth; 
   medecin.licenseNumber = licenseNumber || medecin.licenseNumber; 
+   
 
 
   

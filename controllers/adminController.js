@@ -86,7 +86,7 @@ export const approveMedecin = asyncHandler(async (req, res) => {
       await sendEmailmed(
         medecin.email, 
         "Votre compte a été approuvé", 
-        medecin.name, 
+        medecin.firstname, 
         "Félicitations, votre compte a été approuvé avec succès. Vous pouvez maintenant recevoir des rendez-vous de patients."
       );
       console.log("✅ Email d'approbation envoyé au médecin");
@@ -123,7 +123,7 @@ export const rejectMedecin = asyncHandler(async (req, res) => {
       await sendEmailmed(
         medecin.email, 
         "Votre compte a été rejeté", 
-        medecin.name, 
+        medecin.firstname, 
         "Nous regrettons de vous informer que votre compte a été rejeté. Pour plus d'informations, veuillez contacter notre support."
       );
       console.log("✅ Email de rejet envoyé au médecin");
@@ -157,11 +157,6 @@ export const getUserById = asyncHandler(async (req, res) => {
 
   res.status(200).json(user);
 });
-
-
-
-
-
 
 
 export const blockUser = asyncHandler(async (req, res) => {

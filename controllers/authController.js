@@ -14,9 +14,9 @@ const generateRefreshToken = (payload) => {
 };
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, gender, dateOfBirth } = req.body;
+  const { firstname,lastname, email, phone, password, gender, dateOfBirth } = req.body;
 
-  if (!name || !email || !phone || !password || !gender || !dateOfBirth) {
+  if (!firstname || !lastname|| !email || !phone || !password || !gender || !dateOfBirth) {
     res.status(400).json({ message: "Tous les champs sont requis" });
     return;
   }
@@ -31,7 +31,8 @@ export const registerUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const newUser = await User.create({ 
-    name, 
+    firstname, 
+    lastname,
     email, 
     phone, 
     password: hashedPassword,
@@ -39,7 +40,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     dateOfBirth: new Date(dateOfBirth), 
   });
 
-  await sendEmail(email, name);
+  await sendEmail(email, firstname);
 
   res.status(201).json({ message: "Utilisateur créé avec succès", user: newUser });
 });
@@ -67,7 +68,8 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   res.json({
     id: user.id,
-    name: user.name,
+    firstname: user.firstname,
+    lastname: user.lastname,
     email: user.email,
     accessToken,
   });
@@ -79,10 +81,10 @@ export const loginUser = asyncHandler(async (req, res) => {
 
 //register medecin
 export const registerMedecin = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, specialite, dateOfBirth, licenseNumber } = req.body;
+  const { firstname,lastname, email, phone, password, specialite, dateOfBirth, licenseNumber } = req.body;
 
 
-  if (!name || !email || !phone || !password || !specialite || !dateOfBirth || !licenseNumber) {
+  if (!firstname || !lastname || !email || !phone || !password || !specialite || !dateOfBirth || !licenseNumber) {
     return res.status(400).json({ message: "Tous les champs sont obligatoires" });
   }
 
@@ -107,7 +109,8 @@ export const registerMedecin = asyncHandler(async (req, res) => {
 
 
   const newMedecin = await Medecin.create({
-    name,
+    firstname,
+    lastname,
     email,
     phone,
     password: hashedPassword,
@@ -132,25 +135,29 @@ export const loginMedecin = asyncHandler(async (req, res) => {
     return res.status(401).json({ message: "Email ou mot de passe incorrect" });
   }
 
+  // Générer les tokens
   const payload = { id: medecin.id, email: medecin.email, role: "medecin" };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
+  // Envoi du refresh token dans le cookie
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production", // Utilise `true` en production
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
   });
 
   res.json({
     id: medecin.id,
-    name: medecin.name,
+    firstname: medecin.firstname,
+    lastname: medecin.lastname,
     email: medecin.email,
     specialite: medecin.specialite,
     accessToken,
   });
 });
+
 
 
 

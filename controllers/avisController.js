@@ -60,7 +60,7 @@ export const createAvis = asyncHandler(async (req, res) => {
 export const getAvisByMedecin = asyncHandler(async (req, res) => {
   const avis = await Avis.findAll({
     where: { medecinId: req.params.medecinId },
-    include: { model: User, attributes: ["name"] }, // Récupérer le nom du patient
+    include: { model: User, attributes: ["firstname"] }, // Récupérer le nom du patient
   });
 
   res.status(200).json(avis);

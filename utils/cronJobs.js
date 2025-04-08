@@ -18,7 +18,7 @@ cron.schedule("0 8 * * *", async () => {
           [Op.between]: [startOfDay, endOfDay],
         },
       },
-      include: [{ model: User, attributes: ["email", "name"] }],
+      include: [{ model: User, attributes: ["email", "firstname","lastname"] }],
     });
 
     if (appointments.length === 0) {
@@ -29,12 +29,12 @@ cron.schedule("0 8 * * *", async () => {
     const sentEmails = new Set(); // Évite les doublons d'envoi
 
     for (const appointment of appointments) {
-      const { email, name } = appointment.User;
+      const { email, firstname } = appointment.User;
 
       if (!sentEmails.has(email)) { // Vérifie si l'email a déjà été envoyé
         const subject = "📅 Rappel de votre rendez-vous médical";
       const message = `
-Bonjour ${name},  
+Bonjour ${firstname},  
 
 ✨ Ceci est un rappel pour vous informer que vous avez un rendez-vous médical prévu demain.  
 

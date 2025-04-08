@@ -33,13 +33,15 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
   
-  const { name, email, phone, dateOfBirth } = req.body;
+  const { firstname, lastname, email, phone, dateOfBirth } = req.body;
 
   
-  user.name = name || user.name;
-  user.email = email || user.email;
-  user.phone = phone || user.phone;
-  user.dateOfBirth = dateOfBirth || user.dateOfBirth; 
+  user.firstname = firstname || user.firstname;
+user.lastname = lastname || user.lastname;
+user.email = email || user.email;
+user.phone = phone || user.phone;
+user.dateOfBirth = dateOfBirth || user.dateOfBirth;
+
 
   
   await user.save();

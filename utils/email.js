@@ -10,13 +10,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (to, subject="inscription sur la platforme", name="patient") => {
+export const sendEmail = async (to, subject="inscription sur la platforme", firstname="patient") => {
   try {
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: to, 
       subject: subject,
-      text: `Bonjour ${name},\n\nBienvenue sur notre plateforme de gestion des rendez-vous médicaux ! Nous sommes ravis de vous compter parmi nous.\n\nSi vous avez des questions, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe de support`,
+      text: `Bonjour ${firstname},\n\nBienvenue sur notre plateforme de gestion des rendez-vous médicaux ! Nous sommes ravis de vous compter parmi nous.\n\nSi vous avez des questions, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe de support`,
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -28,7 +28,7 @@ export const sendEmail = async (to, subject="inscription sur la platforme", name
 export const sendEmailapp = async (
   to,
   subject = "Confirmation de rendez-vous",
-  name = "patient",
+  firstname = "patient",
   date,
   time,
   doctorName
@@ -38,7 +38,7 @@ export const sendEmailapp = async (
       from: process.env.SMTP_FROM,
       to: to,
       subject: subject,
-      text: `Bonjour ${name},\n\nVotre rendez  avec le Dr. ${doctorName}  pour le ${date} à ${time}  est enregistrer  .\n\nSi vous avez des questions, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe de support`,
+      text: `Bonjour ${firstname},\n\nVotre rendez  avec le Dr. ${doctorName}  pour le ${date} à ${time}  est enregistrer  .\n\nSi vous avez des questions, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe de support`,
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -50,7 +50,7 @@ export const sendEmailapp = async (
 export const sendEmailmed = async (
   to,
   subject = "Notification",
-  name = "Utilisateur",
+  firstname = "Utilisateur",
   message = "Vous avez une nouvelle notification."
 ) => {
   try {
@@ -58,7 +58,7 @@ export const sendEmailmed = async (
       from: process.env.SMTP_FROM,
       to: to,
       subject: subject,
-      text: `Bonjour ${name},\n\n${message}\n\nCordialement,\nL'équipe de support`,
+      text: `Bonjour ${firstname},\n\n${message}\n\nCordialement,\nL'équipe de support`,
     };
 
     const info = await transporter.sendMail(mailOptions);
