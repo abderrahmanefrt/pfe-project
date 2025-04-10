@@ -4,6 +4,8 @@ import Medecin from "../models/Medecin.js";
 import Appointment from "../models/Appointment.js";
 import Avis from "../models/Avis.js";
 import { sendEmailmed } from "../utils/email.js";
+import { Sequelize } from "sequelize";
+
 /** ============================ MÉDECINS ============================ **/
 export const getAllMedecins = asyncHandler(async (req, res) => {
   const medecins = await Medecin.findAll();
@@ -196,4 +198,31 @@ export const deleteAvis = asyncHandler(async (req, res) => {
 
   await avis.destroy();
   res.status(200).json({ message: "Avis supprimé avec succès." });
+});
+
+
+export const getAdminStats = asyncHandler(async (req, res) => {
+  const totalUsers = await User.count();
+
+  const approvedMedecins = await Medecin.count({ where: { status: "approved" } });
+
+  // 📌 Nombre total de rendez-vous
+  const totalAppointments = await Appointment.count();
+
+  const appointmentsPerDate = await Appointment.findAll({
+    attributes: [
+      "date",
+      [Sequelize.fn("COUNT", Sequelize.col("id")), "count"]
+    ],
+    group: ["date"],
+    order: [["date", "ASC"]],
+    raw: true,
+  });
+
+  res.json({
+    totalPatient,
+    approvedMedecins,
+    totalAppointments,
+    appointmentsPerDate
+  });
 });

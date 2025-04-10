@@ -3,7 +3,7 @@ import {
   getAllMedecins, getMedecinById,  updateMedecin, deleteMedecin,
   getPendingMedecins, approveMedecin, rejectMedecin,
   getAllUsers, getUserById, blockUser, deleteUser, 
-  getAllAvis, deleteAvis
+  getAllAvis, deleteAvis ,getAdminStats 
 } from "../controllers/adminController.js";
 import { admin } from "../middlewares/authMiddleware.js"; 
 import { protect } from "../middlewares/authMiddleware.js";
@@ -30,5 +30,8 @@ router.delete("/users/:id", protect,admin, deleteUser);
 /** AVIS */
 router.get("/avis", protect,admin, getAllAvis);
 router.delete("/avis/:id", protect,admin, deleteAvis);
+
+router.get("/stats", protect, admin, getAdminStats);
+
 
 export default router;
