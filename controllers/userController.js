@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import User from "../models/Users.js";
+import Medecin from "../models/Medecin.js";
 
 
 
@@ -87,3 +88,18 @@ export const deleteMyAccount = asyncHandler(async (req, res) => {
   
   res.status(200).json({ message: "Compte supprimé avec succès." });
 });
+
+
+export const getMedicins =asyncHandler(async (req,res)=>{
+  const medecins = await Medecin.findAll({
+    where: {status :"approved"},
+    attributes: { exclude: ["password", "createdAt", "updatedAt", "document","created_at","updated_at"] },
+  });
+
+  res.status(200).json(medecins);
+});
+ 
+
+
+
+

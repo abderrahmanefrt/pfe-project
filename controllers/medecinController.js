@@ -1,6 +1,8 @@
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import Medecin from "../models/Medecin.js";
+import { Op } from "sequelize";
+
 
 
 
