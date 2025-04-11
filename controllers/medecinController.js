@@ -89,3 +89,39 @@ export const deleteMyAccount = asyncHandler(async (req, res) => {
   
   res.status(200).json({ message: "Compte supprimé avec succès." });
 });
+
+
+export const searchMedecins = asyncHandler(async (req, res) => {
+  const { firstname, specialite, page = 1, limit = 10 } = req.query;
+
+  const offset = (page - 1) * limit;
+
+  const whereClause = {
+    status: "approved", 
+  };
+
+
+  if (firstname) {
+    whereClause.firstname = { [Op.iLike]: `%${firstname}%` };
+  }
+
+  if (specialite) {
+    whereClause.specialite = { [Op.iLike]: `%${specialite}%` };
+  }
+
+
+
+  const { count, rows } = await Medecin.findAndCountAll({
+    where: whereClause,
+    offset: parseInt(offset),
+    limit: parseInt(limit),
+    attributes: { exclude: ["password", "createdAt", "updatedAt", "document"] },
+  });
+
+  res.status(200).json({
+    total: count,
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(count / limit),
+    medecins: rows,
+  });
+});

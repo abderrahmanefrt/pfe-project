@@ -5,6 +5,7 @@ import {
   updateProfile,
   updatePassword,
   deleteMyAccount,
+  searchMedecins,
 } from "../controllers/medecinController.js";
 import {
   addDisponibilite,
@@ -19,6 +20,7 @@ router.get("/me", protectMedecin,getMedc);
 router.put("/profile", protectMedecin, updateProfile);
 router.put("/password", protectMedecin, updatePassword);
 router.delete("/deletemyaccount", protectMedecin, deleteMyAccount);
+router.get("/SearchMedecin",searchMedecins);
 
 router.post("/disponibilites", protectMedecin, addDisponibilite);
 
