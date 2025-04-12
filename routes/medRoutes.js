@@ -1,11 +1,12 @@
 import express from "express";
-import { protectMedecin } from "../middlewares/authMiddleware.js";
+import { protect, protectMedecin } from "../middlewares/authMiddleware.js";
 import {
   getMedc,
   updateProfile,
   updatePassword,
   deleteMyAccount,
   searchMedecins,
+  getMedecinsProches,
 } from "../controllers/medecinController.js";
 import {
   addDisponibilite,
@@ -21,6 +22,7 @@ router.put("/profile", protectMedecin, updateProfile);
 router.put("/password", protectMedecin, updatePassword);
 router.delete("/deletemyaccount", protectMedecin, deleteMyAccount);
 router.get("/SearchMedecin",searchMedecins);
+router.get("/nearMedecin",protect,getMedecinsProches);
 
 router.post("/disponibilites", protectMedecin, addDisponibilite);
 

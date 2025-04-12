@@ -47,6 +47,18 @@ const User = sequelize.define("User", {
     allowNull: false,
     defaultValue: "active", 
   },
+  adresse: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  latitude: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  longitude: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  }
 }, { timestamps: true });
 
 export default User;

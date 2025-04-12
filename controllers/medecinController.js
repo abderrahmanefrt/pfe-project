@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import bcrypt from "bcrypt";
 import Medecin from "../models/Medecin.js";
 import { Op } from "sequelize";
+import {  Sequelize } from "sequelize";
 
 
 
@@ -125,3 +126,46 @@ export const searchMedecins = asyncHandler(async (req, res) => {
     medecins: rows,
   });
 });
+
+
+
+export const getMedecinsProches = asyncHandler(async (req, res) => {
+  const { latitude, longitude, distance = 10 } = req.query;
+
+  if (!latitude || !longitude) {
+    return res.status(400).json({ message: "Latitude et longitude requises" });
+  }
+
+  const distanceInKm = parseFloat(distance);
+
+  const earthRadius = 6371; // rayon de la terre en km
+
+  const medecins = await Medecin.findAll({
+    attributes: {
+      include: [
+        [
+          Sequelize.literal(`
+            ${earthRadius} * acos(
+              cos(radians(${latitude})) *
+              cos(radians(latitude)) *
+              cos(radians(longitude) - radians(${longitude})) +
+              sin(radians(${latitude})) *
+              sin(radians(latitude))
+            )
+          `),
+          'distance'
+        ]
+      ],
+    },
+    where: {
+      latitude: { [Op.ne]: null },
+      longitude: { [Op.ne]: null },
+    },
+    order: Sequelize.literal('distance ASC'),
+  });
+
+  const medecinsProches = medecins.filter(m => m.dataValues.distance <= distanceInKm);
+
+  res.json(medecinsProches);
+});
+
