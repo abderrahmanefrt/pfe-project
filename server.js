@@ -13,7 +13,6 @@ import upload from "./middlewares/uploads.js";
 import "./utils/cronJobs.js";
 import cors  from "cors";
 import cookieParser from "cookie-parser";
-
 import "./models/relations.js";
 
 dotenv.config(); 
