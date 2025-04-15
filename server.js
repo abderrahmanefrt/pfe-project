@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-import userRoutes from "./routes/userroutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import sequelize from "./config/db.js";
 import medRoutes from "./routes/medRoutes.js";
