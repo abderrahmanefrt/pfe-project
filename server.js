@@ -47,6 +47,15 @@ try {
   console.error('Unable to connect to the database:', error);
 }
 
+sequelize.sync({ alter: true }) // crée automatiquement les tables si elles n'existent pas
+  .then(() => {
+    console.log("✅ Base de données synchronisée !");
+  })
+  .catch((err) => {
+    console.error("❌ Erreur de synchronisation :", err);
+  });
+
+
 app.listen(port, () => {
   console.log(` Serveur en écoute sur le port ${port}`);
 });
