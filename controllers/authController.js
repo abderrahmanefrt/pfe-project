@@ -168,17 +168,20 @@ export const loginMedecin = asyncHandler(async (req, res) => {
     return res.status(401).json({ message: "Email ou mot de passe incorrect" });
   }
 
-  // Générer les tokens
+  // ❌ Vérifie si le compte est validé
+  if (medecin.status !== "approved") {
+    return res.status(403).json({ message: "Votre compte est en attente de validation par un administrateur." });
+  }
+
   const payload = { id: medecin.id, email: medecin.email, role: "medecin" };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
-  // Envoi du refresh token dans le cookie
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", 
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   res.json({
@@ -190,6 +193,7 @@ export const loginMedecin = asyncHandler(async (req, res) => {
     accessToken,
   });
 });
+
 
 
 

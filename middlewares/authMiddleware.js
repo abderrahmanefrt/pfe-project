@@ -17,14 +17,18 @@ export const protectMedecin = asyncHandler(async (req, res, next) => {
 
       console.log("🔹 Token décodé:", decoded);
 
-      // 🔥 Vérifier dans la table Medecins, et non Users
       const medecin = await Medecin.findByPk(decoded.id);
 
       if (!medecin) {
         return res.status(401).json({ message: "Médecin non trouvé." });
       }
 
-      req.user = medecin; // Stocker le médecin dans req.user
+      
+      if (medecin.status !== "approved") {
+        return res.status(403).json({ message: "Votre compte doit être validé par un administrateur." });
+      }
+
+      req.user = medecin;
       next();
     } catch (error) {
       console.error("🔴 Erreur de token:", error);
@@ -34,6 +38,7 @@ export const protectMedecin = asyncHandler(async (req, res, next) => {
     res.status(401).json({ message: "Non autorisé, pas de token" });
   }
 });
+
 
 
 // Middleware pour protéger toutes les routes authentifiées
@@ -90,7 +95,7 @@ export const patientOrAdmin = asyncHandler(async (req, res, next) => {
   }
 
   if (req.user.role === "user") {
-    req.isPatient = true; // On marque l'utilisateur comme patient
+    req.isPatient = true; 
     return next();
   }
 
