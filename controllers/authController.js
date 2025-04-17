@@ -176,7 +176,7 @@ export const loginMedecin = asyncHandler(async (req, res) => {
   // Envoi du refresh token dans le cookie
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Utilise `true` en production
+    secure: process.env.NODE_ENV === "production", 
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
   });

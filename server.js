@@ -20,8 +20,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 //for front end
-app.use(cors({ origin: 'http://localhost:5173' }));
-
+app.use(cors());
 
 app.use(express.json());
 
@@ -47,7 +46,7 @@ try {
   console.error('Unable to connect to the database:', error);
 }
 
-sequelize.sync({ alter: true }) // crée automatiquement les tables si elles n'existent pas
+sequelize.sync({ alter: true }) 
   .then(() => {
     console.log("✅ Base de données synchronisée !");
   })
