@@ -22,6 +22,10 @@ const Availability = sequelize.define("Availability", {
     type: DataTypes.STRING, 
     allowNull: false,
   },
+  maxPatient:{
+    type:DataTypes.INTEGER,
+    allowNull: true,
+  },
   startTime: {
     type: DataTypes.STRING,
     allowNull: false,

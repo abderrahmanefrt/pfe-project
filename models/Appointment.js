@@ -3,48 +3,33 @@ import sequelize from "../config/db.js";
 import Medecin from "./Medecin.js";
 import User from "./Users.js";
 
-const Appointment = sequelize.define("Appointment", {
+const Appointment = sequelize.define('Appointment', {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
+    type: DataTypes.UUID,  // Remplacer Sequelize.UUID par DataTypes.UUID
+    defaultValue: DataTypes.UUIDV4,  // Génère un UUID par défaut
+    primaryKey: true
   },
   userId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.INTEGER,  // Utilisation de DataTypes au lieu de Sequelize
     allowNull: false,
-    references: {
-      model: User,
-      key: "id",
-    },
   },
   medecinId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.INTEGER,  // Utilisation de DataTypes au lieu de Sequelize
     allowNull: false,
-    references: {
-      model: Medecin,
-      key: "id",
-    },
   },
   date: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,  // Utilisation de DataTypes au lieu de Sequelize
     allowNull: false,
   },
-  time: {
-    type: DataTypes.TIME,
+  numeroPassage: {
+    type: DataTypes.INTEGER,  // Utilisation de DataTypes au lieu de Sequelize
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM("pending", "confirmed", "cancelled","completed","accepter","refuser"),
-    defaultValue: "pending",
-  },
-  numeroPassage: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  
-  
+    type: DataTypes.STRING,  // Utilisation de DataTypes au lieu de Sequelize
+    defaultValue: 'pending',
+  }
 });
-
 
 Appointment.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
 Appointment.belongsTo(Medecin, { foreignKey: "medecinId", onDelete: "CASCADE" });
