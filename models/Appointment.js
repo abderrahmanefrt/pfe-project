@@ -5,28 +5,34 @@ import User from "./Users.js";
 
 const Appointment = sequelize.define('Appointment', {
   id: {
-    type: DataTypes.UUID,  // Remplacer Sequelize.UUID par DataTypes.UUID
-    defaultValue: DataTypes.UUIDV4,  // Génère un UUID par défaut
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
   userId: {
-    type: DataTypes.INTEGER,  // Utilisation de DataTypes au lieu de Sequelize
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
   medecinId: {
-    type: DataTypes.INTEGER,  // Utilisation de DataTypes au lieu de Sequelize
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
   date: {
-    type: DataTypes.DATEONLY,  // Utilisation de DataTypes au lieu de Sequelize
+    type: DataTypes.DATEONLY,
     allowNull: false,
   },
+  time: {
+    type: DataTypes.TIME,
+    allowNull: false,
+    defaultValue: '00:00:00',
+  },
+  
   numeroPassage: {
-    type: DataTypes.INTEGER,  // Utilisation de DataTypes au lieu de Sequelize
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
   status: {
-    type: DataTypes.STRING,  // Utilisation de DataTypes au lieu de Sequelize
+    type: DataTypes.STRING,
     defaultValue: 'pending',
   }
 });

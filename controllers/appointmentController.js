@@ -14,9 +14,9 @@ import { Op, Sequelize } from 'sequelize';
 
 
 export const createAppointment = asyncHandler(async (req, res) => {
-  const { userId, medecinId, date } = req.body;
+  const { userId, medecinId, date, time } = req.body;
 
-  if (!userId || !medecinId || !date) {
+  if (!userId || !medecinId || !date || !time) {
     return res.status(400).json({ message: "Tous les champs sont requis" });
   }
 
@@ -30,43 +30,68 @@ export const createAppointment = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Ce médecin n'est pas encore approuvé" });
   }
 
-  // Vérifier la disponibilité du médecin
-  const availability = await Availability.findOne({
-    where: { medecinId, date }
+  // Trouver les disponibilités pour la date donnée
+  const availabilities = await Availability.findAll({
+    where: { medecinId, date },
   });
 
-  if (!availability) {
+  if (!availabilities || availabilities.length === 0) {
     return res.status(400).json({ message: "Aucune disponibilité trouvée pour cette date" });
   }
 
-  // Compter les rendez-vous déjà pris pour cette date
-  const appointmentCount = await Appointment.count({
+  const requestedTime = new Date(`1970-01-01T${time}`);
+
+  // Trouver le créneau correspondant
+  const matchedCreneau = availabilities.find(avail => {
+    const start = new Date(`1970-01-01T${avail.startTime}`);
+    const end = new Date(`1970-01-01T${avail.endTime}`);
+    return requestedTime >= start && requestedTime <= end;
+  });
+
+  if (!matchedCreneau) {
+    return res.status(400).json({ message: "L'heure choisie ne correspond à aucun créneau." });
+  }
+
+  // Vérifier que l'utilisateur n'a pas déjà un RDV pour ce jour-là
+  const alreadyHasAppointment = await Appointment.findOne({
     where: {
-      medecinId,
-      date
+      userId,
+      date,
     }
   });
 
-  const maxPatients = availability.maxPatient;
-
-  if (appointmentCount >= maxPatients) {
+  if (alreadyHasAppointment) {
     return res.status(400).json({
-      message: "Le médecin a atteint le nombre maximal de rendez-vous pour ce créneau."
+      message: "Vous avez déjà un rendez-vous pour ce jour-là.",
     });
   }
 
-  const numeroPassage = appointmentCount + 1;
+  // Compter les rendez-vous dans le créneau
+  const appointmentsInCreneau = await Appointment.count({
+    where: {
+      medecinId,
+      date,
+      time: {
+        [Op.between]: [matchedCreneau.startTime, matchedCreneau.endTime]
+      }
+    }
+  });
 
-  // Créer le rendez-vous
+  if (appointmentsInCreneau >= matchedCreneau.maxPatient) {
+    return res.status(400).json({ message: "Ce créneau est complet." });
+  }
+
+  const numeroPassage = appointmentsInCreneau + 1;
+
   const newAppointment = await Appointment.create({
     userId,
     medecinId,
     date,
-    numeroPassage,
-    status: "pending"
+    time,
+    numeroPassage
   });
 
-  // Envoi e-mail confirmation
+  // Envoi de mail
   try {
     await sendEmailapp(
       user.email,
@@ -74,12 +99,12 @@ export const createAppointment = asyncHandler(async (req, res) => {
       user.firstname,
       user.lastname,
       date,
-      null, // Pas besoin de l'heure
+      time,
       medecin.firstname,
       medecin.lastname
     );
   } catch (error) {
-    console.error("❌ Erreur lors de l'envoi de l'email :", error);
+    console.error("Erreur lors de l'envoi de l'email :", error);
   }
 
   res.status(201).json({
@@ -87,6 +112,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
     appointment: newAppointment
   });
 });
+
 
 
 
