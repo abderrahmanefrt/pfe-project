@@ -46,9 +46,9 @@ try {
   console.error('Unable to connect to the database:', error);
 }
 
-sequelize.sync({ alter: true }) 
+sequelize.sync({ alter: true })
   .then(() => {
-    console.log("✅ Base de données synchronisée !");
+    console.log("✅ Modèles synchronisés avec la base de données");
   })
   .catch((err) => {
     console.error("❌ Erreur de synchronisation :", err);

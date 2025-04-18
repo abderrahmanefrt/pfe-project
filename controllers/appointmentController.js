@@ -4,11 +4,15 @@ import User from "../models/Users.js";
 import Medecin from "../models/Medecin.js";
 import Availability from "../models/Availability.js";
 import { sendEmailapp } from "../utils/email.js"
+import { Op, Sequelize } from 'sequelize';
+
 /**  
  * @desc Create an appointment (Only for users)
  * @route POST /api/appointments
  * @access Private (User)
  */
+
+
 export const createAppointment = asyncHandler(async (req, res) => {
   const { userId, medecinId, date, time } = req.body;
 
@@ -27,7 +31,6 @@ export const createAppointment = asyncHandler(async (req, res) => {
   }
 
   // Vérifier la disponibilité du médecin
-  console.log("Availability model:", Availability);
   const availabilities = await Availability.findAll({
     where: { medecinId, date },
   });
@@ -35,11 +38,6 @@ export const createAppointment = asyncHandler(async (req, res) => {
   if (!availabilities || availabilities.length === 0) {
     return res.status(400).json({ message: "Aucune disponibilité trouvée pour cette date" });
   }
-
-  console.log("🔎 Vérification des disponibilités du médecin :");
-  availabilities.forEach(avail => {
-    console.log(`📅 Date: ${avail.date}, ⏳ StartTime: ${avail.startTime}, ⌛ EndTime: ${avail.endTime}`);
-  });
 
   const isAvailable = availabilities.some(avail =>
     new Date(`1970-01-01T${time}Z`) >= new Date(`1970-01-01T${avail.startTime}Z`) &&
@@ -50,18 +48,52 @@ export const createAppointment = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "L'heure choisie n'est pas dans la plage horaire du médecin." });
   }
 
-  console.log("✅ L'heure demandée est bien dans la plage horaire du médecin");
+  const existingAppointment = await Appointment.findOne({
+    where: { medecinId, date, time }
+  });
 
-  // Vérifier si un autre rendez-vous est déjà pris
-  const existingAppointment = await Appointment.findOne({ where: { medecinId, date, time } });
   if (existingAppointment) {
     return res.status(400).json({ message: "Ce créneau est déjà réservé." });
   }
 
-  // Création du rendez-vous
-  const newAppointment = await Appointment.create({ userId, medecinId, date, time });
+  const existingAppointmentsCount = await Appointment.count({
+    where: {
+      medecinId,
+      [Op.and]: [
+        Sequelize.where(Sequelize.fn('DATE', Sequelize.col('date')), date)
+      ]
+    }
+  });
+  
 
-  // Envoi de l'email de confirmation
+  
+  const numeroPassage = existingAppointmentsCount + 1;
+  const alreadyHasAppointment = await Appointment.findOne({
+    where: {
+      userId,
+      [Sequelize.Op.and]: Sequelize.where(
+        Sequelize.fn('DATE', Sequelize.col('date')),
+        date
+      )
+    }
+  });
+  
+  if (alreadyHasAppointment) {
+    return res.status(400).json({
+      message: "Vous avez déjà un rendez-vous pour ce jour-là."
+    });
+  }
+
+  // ➕ Créer le rendez-vous
+  const newAppointment = await Appointment.create({
+    userId,
+    medecinId,
+    date,
+    time,
+    numeroPassage
+  });
+
+  // ✉️ Envoi de l'e-mail de confirmation
   try {
     await sendEmailapp(
       user.email,
@@ -73,13 +105,18 @@ export const createAppointment = asyncHandler(async (req, res) => {
       medecin.firstname,
       medecin.lastname
     );
-    console.log("✅ Email de confirmation envoyé au patient");
   } catch (error) {
     console.error("❌ Erreur lors de l'envoi de l'email :", error);
   }
 
-  res.status(201).json({ message: "Rendez-vous créé avec succès", appointment: newAppointment });
+  res.status(201).json({
+    message: `Rendez-vous créé avec succès. Vous êtes le ${numeroPassage}e patient pour ce jour en attendant la confirmation du medecin.`,
+    appointment: newAppointment
+  });
 });
+
+
+
 
 
 

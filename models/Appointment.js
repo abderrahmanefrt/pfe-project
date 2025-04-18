@@ -37,6 +37,12 @@ const Appointment = sequelize.define("Appointment", {
     type: DataTypes.ENUM("pending", "confirmed", "cancelled","completed","accepter","refuser"),
     defaultValue: "pending",
   },
+  numeroPassage: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  
+  
 });
 
 
