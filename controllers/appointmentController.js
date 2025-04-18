@@ -14,9 +14,10 @@ import { Op, Sequelize } from 'sequelize';
 
 
 export const createAppointment = asyncHandler(async (req, res) => {
-  const { userId, medecinId, date, time } = req.body;
+  const { medecinId, date, time } = req.body;
+  const userId = req.user.id; // Récupère userId depuis le token JWT
 
-  if (!userId || !medecinId || !date || !time) {
+  if (!medecinId || !date || !time) {
     return res.status(400).json({ message: "Tous les champs sont requis" });
   }
 
@@ -124,6 +125,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
 
 
+
 /**  
  * @desc Get all appointments (Admin only)
  * @route GET /api/appointments
@@ -192,25 +194,36 @@ export const getAppointmentById = asyncHandler(async (req, res) => {
  * @route PUT /api/appointments/:id
  * @access Private (User/Admin)
  */
+
 export const updateAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { date, time, status } = req.body;
   const userId = req.user.id;
+  const userRole = req.user.role;
 
   const appointment = await Appointment.findByPk(id);
   if (!appointment) {
     return res.status(404).json({ message: "Rendez-vous non trouvé." });
   }
 
-  // Vérifier si c'est le patient qui veut modifier son rendez-vous
-  if (appointment.userId === userId) {
-    // Vérifier la disponibilité du médecin
+  // ❌ Si le rendez-vous est déjà accepté, personne ne peut le modifier
+  if (appointment.status === "accepter") {
+    return res.status(403).json({ message: "Rendez-vous déjà accepté, il ne peut plus être modifié." });
+  }
+
+  // ✅ Si c’est le patient qui modifie sa date/heure
+  if (userRole === "patient" && appointment.userId === userId) {
+    if (!date || !time) {
+      return res.status(400).json({ message: "Date et heure requises." });
+    }
+
+    // Vérifier la disponibilité du médecin à la date donnée
     const availabilities = await Availability.findAll({
       where: { medecinId: appointment.medecinId, date },
     });
 
-    if (!availabilities || availabilities.length === 0) {
-      return res.status(400).json({ message: "Aucune disponibilité trouvée pour cette date" });
+    if (availabilities.length === 0) {
+      return res.status(400).json({ message: "Aucune disponibilité pour cette date." });
     }
 
     const isAvailable = availabilities.some(avail =>
@@ -219,25 +232,29 @@ export const updateAppointment = asyncHandler(async (req, res) => {
     );
 
     if (!isAvailable) {
-      return res.status(400).json({ message: "L'heure choisie n'est pas dans la plage horaire du médecin." });
+      return res.status(400).json({ message: "L'heure n'est pas dans les créneaux disponibles du médecin." });
     }
 
-    // Vérifier si l'heure est déjà prise
-    const existingAppointment = await Appointment.findOne({
-      where: { medecinId: appointment.medecinId, date, time, id: { $ne: appointment.id } }
+    // Vérifier si l'heure est déjà réservée
+    const existing = await Appointment.findOne({
+      where: {
+        medecinId: appointment.medecinId,
+        date,
+        time,
+        id: { [Op.ne]: appointment.id }
+      }
     });
 
-    if (existingAppointment) {
+    if (existing) {
       return res.status(400).json({ message: "Ce créneau est déjà réservé." });
     }
 
-    // Mettre à jour la date et l'heure
     appointment.date = date;
     appointment.time = time;
-  } 
-  
-  // Vérifier si l'admin peut mettre à jour le statut
-  if (req.user.role === "admin" && status) {
+  }
+
+  // ✅ Si c’est le médecin qui veut changer le statut
+  if (userRole === "medecin" && appointment.medecinId === userId && status) {
     appointment.status = status;
   }
 
@@ -245,6 +262,8 @@ export const updateAppointment = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Rendez-vous mis à jour avec succès.", appointment });
 });
+
+
 
 
 /**  
