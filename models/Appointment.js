@@ -23,8 +23,8 @@ const Appointment = sequelize.define('Appointment', {
   },
   time: {
     type: DataTypes.TIME,
-    allowNull: false,
-    defaultValue: '00:00:00',
+    allowNull: true,
+    
   },
   
   numeroPassage: {
