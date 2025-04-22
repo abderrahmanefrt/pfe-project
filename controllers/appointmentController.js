@@ -41,8 +41,13 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
   // Vérifier que le patient n'a pas déjà un rendez-vous ce jour-là
   const alreadyHasAppointment = await Appointment.findOne({
-    where: { userId, date },
+    where: {
+      userId,
+      medecinId, 
+      date,
+    }
   });
+  
 
   if (alreadyHasAppointment) {
     return res.status(400).json({

@@ -70,12 +70,32 @@ export const addDisponibilite = asyncHandler(async (req, res) => {
 
 
 export const getDisponibilites = asyncHandler(async (req, res) => {
-  const disponibilites = await Availability.findAll({
-    where: { medecinId: req.user.id },
+  const today = new Date().toISOString().split("T")[0];
+
+  const disponibilitesAVenir = await Availability.findAll({
+    where: {
+      medecinId: req.user.id,
+      date: {
+        [Op.gte]: today
+      }
+    },
     order: [["date", "ASC"], ["startTime", "ASC"]],
   });
 
-  res.status(200).json(disponibilites);
+  const disponibilitesPassees = await Availability.findAll({
+    where: {
+      medecinId: req.user.id,
+      date: {
+        [Op.lt]: today
+      }
+    },
+    order: [["date", "DESC"], ["startTime", "ASC"]],
+  });
+
+  res.status(200).json({
+    a_venir: disponibilitesAVenir,
+    passees: disponibilitesPassees,
+  });
 });
 
 
@@ -153,22 +173,42 @@ export const deleteDisponibilite = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Disponibilité supprimée avec succès." });
 });
 
+
 export const getDisponibilitesByMedecin = asyncHandler(async (req, res) => {
   const { medecinId } = req.params;
 
   if (!medecinId || isNaN(medecinId)) {
-    return res.status(400).json({ message: "L'ID du médecin est requis et doit être un nombre." });
+    return res.status(400).json({
+      message: "L'ID du médecin est requis et doit être un nombre."
+    });
   }
 
-  const disponibilites = await Availability.findAll({
-    where: { medecinId },
+  const today = new Date().toISOString().split("T")[0];
+
+  const disponibilitesAVenir = await Availability.findAll({
+    where: {
+      medecinId,
+      date: {
+        [Op.gte]: today
+      }
+    },
     order: [["date", "ASC"], ["startTime", "ASC"]],
   });
 
-  if (!disponibilites.length) {
-    return res.status(404).json({ message: "Aucune disponibilité trouvée pour ce médecin." });
-  }
+  const disponibilitesPassees = await Availability.findAll({
+    where: {
+      medecinId,
+      date: {
+        [Op.lt]: today
+      }
+    },
+    order: [["date", "DESC"], ["startTime", "ASC"]],
+  });
 
-  res.status(200).json(disponibilites);
+  res.status(200).json({
+    a_venir: disponibilitesAVenir,
+  
+  });
 });
+
 
