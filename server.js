@@ -21,7 +21,9 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 //for front end
-app.use(cors());
+app.use(cors({
+  origin: '*', // accepte tout pour l'instant
+}));
 
 app.use(express.json());
 
