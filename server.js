@@ -18,12 +18,13 @@ import "./models/relations.js";
 dotenv.config(); 
 
 const app = express();
-const port = process.env.PORT || 3000;
-
-//for front end
 app.use(cors({
   origin: '*', // accepte tout pour l'instant
 }));
+const port = process.env.PORT || 3000;
+
+//for front end
+
 
 app.use(express.json());
 
