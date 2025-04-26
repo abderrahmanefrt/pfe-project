@@ -141,7 +141,7 @@ export const rejectMedecin = asyncHandler(async (req, res) => {
 /** ============================ UTILISATEURS ============================ **/
 
 
-import bcrypt from "bcrypt";
+
 
 
 export const getAllUsers = asyncHandler(async (req, res) => {

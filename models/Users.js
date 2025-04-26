@@ -47,7 +47,7 @@ const User = sequelize.define("User", {
     allowNull: false,
     defaultValue: "active", 
   },
-  adress: {
+  address: {
     type: DataTypes.STRING,
     allowNull: true,
   },

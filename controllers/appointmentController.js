@@ -126,12 +126,22 @@ export const createAppointment = asyncHandler(async (req, res) => {
  * @route GET /api/appointments
  * @access Private (Admin)
  */
+
+
 export const getAllAppointments = asyncHandler(async (req, res) => {
   let appointments;
 
+  const today = new Date(); // Date actuelle
+
   if (req.isPatient) {
+    // Si c'est un patient, on récupère seulement ses futurs rendez-vous
     appointments = await Appointment.findAll({
-      where: { userId: req.user.id },
+      where: { 
+        userId: req.user.id,
+        date: {
+          [Op.gte]: today // uniquement les rendez-vous aujourd'hui ou après
+        }
+      },
       include: [
         { 
           model: User, 
@@ -139,12 +149,22 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
         },
         { 
           model: Medecin, 
-          attributes: ["firstname", "lastname"]  // Seulement le prénom et le nom
+          attributes: ["id", "firstname", "lastname"] 
         },
       ],
+      order: [
+        ["date", "ASC"],
+        ["time", "ASC"]
+      ]
     });
   } else {
+    // Si c'est un admin, on récupère tous les rendez-vous futurs
     appointments = await Appointment.findAll({
+      where: {
+        date: {
+          [Op.gte]: today
+        }
+      },
       include: [
         { 
           model: User, 
@@ -152,14 +172,19 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
         },
         { 
           model: Medecin, 
-          attributes: ["firstname", "lastname"]  // Seulement le prénom et le nom
+          attributes: ["id", "firstname", "lastname"] 
         },
       ],
+      order: [
+        ["date", "ASC"],
+        ["time", "ASC"]
+      ]
     });
   }
 
   res.status(200).json(appointments);
 });
+
 
 /**  
  * @desc Get a single appointment
@@ -201,7 +226,6 @@ export const updateAppointment = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Rendez-vous non trouvé." });
   }
 
-  // ❌ Si le rendez-vous est déjà accepté, personne ne peut le modifier
   if (appointment.status === "accepter") {
     return res.status(403).json({ message: "Rendez-vous déjà accepté, il ne peut plus être modifié." });
   }
