@@ -27,6 +27,13 @@ const port = process.env.PORT || 3000;
 
 
 app.use(express.json());
+app.get('/', (req, res) => {
+  res.send('Bienvenue sur l\'API de prise de rendez-vous 🚀');
+});
+app.get('/api', (req, res) => {
+  res.status(200).json({ message: 'API OK' });
+});
+
 
 
 app.use("/api/users", userRoutes);
