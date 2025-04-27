@@ -33,6 +33,9 @@ app.get('/', (req, res) => {
 app.get('/api', (req, res) => {
   res.status(200).json({ message: 'API OK' });
 });
+app.get("/api/auth/test", (req, res) => {
+  res.json({ message: "Auth route OK" });
+});
 
 
 
