@@ -20,6 +20,8 @@ dotenv.config();
 const app = express();
 app.use(cors({
   origin: '*', // accepte tout pour l'instant
+    credentials: true // obligatoire pour utiliser les cookies
+
 }));
 const port = process.env.PORT || 3000;
 
