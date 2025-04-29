@@ -26,7 +26,7 @@ cron.schedule("0 8 * * *", async () => {
       return;
     }
 
-    const sentEmails = new Set(); // Évite les doublons d'envoi
+    const sentEmails = new Set();
 
     for (const appointment of appointments) {
       const { email, firstname } = appointment.User;

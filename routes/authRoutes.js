@@ -14,7 +14,14 @@ router.post("/login", loginUser);
 //kayen 5dma f front
 router.get("/refresh-token", refreshToken);
 
-router.post("/medecin/register", upload.fields([{ name: "document" }, { name: "photo" }]), registerMedecin);
+router.post(
+  "/medecin/register",
+  upload.fields([
+    { name: "document", maxCount: 1 },
+    { name: "photo", maxCount: 1 }
+  ]),
+  registerMedecin
+);
 
 router.post("/medecin/login", loginMedecin);
 

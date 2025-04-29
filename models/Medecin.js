@@ -71,7 +71,12 @@ const Medecin = sequelize.define(
     longitude: {
       type: DataTypes.FLOAT,
       allowNull: true,
-    }
+    },
+    address: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    
   },
   {
     tableName: "Medecins",

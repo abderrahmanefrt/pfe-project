@@ -8,6 +8,7 @@ import { getCoordinatesFromAddress } from "../utils/geolocate.js";
 import fetch from 'node-fetch';
 
 
+
 const generateAccessToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
 };
@@ -108,6 +109,8 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     licenseNumber,
     address, 
   } = req.body;
+  console.log("Fichiers reçus :", req.files);
+
 
   if (!firstname || !lastname || !email || !phone || !password || !specialite || !dateOfBirth || !licenseNumber || !address) {
     return res.status(400).json({ message: "Tous les champs sont obligatoires" });
@@ -139,6 +142,24 @@ export const registerMedecin = asyncHandler(async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  const clean = (val) => typeof val === "string" ? val.replace(/^"|"$/g, "") : val;
+
+const cleanedData = {
+  firstname: clean(firstname),
+  lastname: clean(lastname),
+  email: clean(email),
+  phone: clean(phone),
+  password: hashedPassword,
+  specialite: clean(specialite),
+  dateOfBirth: clean(dateOfBirth),
+  licenseNumber: clean(licenseNumber),
+  address: clean(address),
+  latitude,
+  longitude,
+  document: req.files["document"][0].path,
+  photo: req.files["photo"][0].path,
+};
+
   const newMedecin = await Medecin.create({
     firstname,
     lastname,
@@ -154,6 +175,8 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     document: req.files["document"][0].path,
     photo: req.files["photo"][0].path,
   });
+
+
 
   res.status(201).json({ message: "Médecin créé avec succès", medecin: newMedecin });
 });

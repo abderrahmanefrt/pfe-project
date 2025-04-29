@@ -20,6 +20,13 @@ export const createAppointment = asyncHandler(async (req, res) => {
   if (!medecinId || !date || !availabilityId) {
     return res.status(400).json({ message: "Tous les champs sont requis" });
   }
+  const today = new Date();
+const selectedDate = new Date(date);
+
+if (selectedDate < today.setHours(0, 0, 0, 0)) {
+  return res.status(400).json({ message: "Impossible de réserver pour une date passée." });
+}
+
 
   const user = await User.findByPk(userId);
   if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
@@ -232,45 +239,54 @@ export const updateAppointment = asyncHandler(async (req, res) => {
 
   // ✅ Si c’est le patient qui modifie sa date/heure
   if (userRole === "patient" && appointment.userId === userId) {
-    if (!date || !time) {
-      return res.status(400).json({ message: "Date et heure requises." });
+    const { availabilityId } = req.body;
+  
+    if (!availabilityId) {
+      return res.status(400).json({ message: "Le nouveau créneau (availabilityId) est requis." });
     }
-
-    // Vérifier la disponibilité du médecin à la date donnée
-    const availabilities = await Availability.findAll({
-      where: { medecinId: appointment.medecinId, date },
-    });
-
-    if (availabilities.length === 0) {
-      return res.status(400).json({ message: "Aucune disponibilité pour cette date." });
-    }
-
-    const isAvailable = availabilities.some(avail =>
-      new Date(`1970-01-01T${time}Z`) >= new Date(`1970-01-01T${avail.startTime}Z`) &&
-      new Date(`1970-01-01T${time}Z`) <= new Date(`1970-01-01T${avail.endTime}Z`)
-    );
-
-    if (!isAvailable) {
-      return res.status(400).json({ message: "L'heure n'est pas dans les créneaux disponibles du médecin." });
-    }
-
-    // Vérifier si l'heure est déjà réservée
-    const existing = await Appointment.findOne({
+  
+    const availability = await Availability.findOne({
       where: {
-        medecinId: appointment.medecinId,
-        date,
-        time,
-        id: { [Op.ne]: appointment.id }
+        id: availabilityId,
+        medecinId: appointment.medecinId
       }
     });
-
-    if (existing) {
-      return res.status(400).json({ message: "Ce créneau est déjà réservé." });
+  
+    if (!availability) {
+      return res.status(404).json({ message: "Créneau de disponibilité non trouvé." });
     }
-
-    appointment.date = date;
+  
+    // Vérifier si la date est passée
+    const today = new Date();
+    const availabilityDate = new Date(availability.date);
+    if (availabilityDate < today.setHours(0, 0, 0, 0)) {
+      return res.status(400).json({ message: "Impossible de déplacer le rendez-vous vers une date passée." });
+    }
+  
+    // Vérifier que le créneau n'est pas complet
+    const appointmentsInSlot = await Appointment.count({
+      where: {
+        availabilityId,
+      }
+    });
+  
+    if (appointmentsInSlot >= availability.maxPatient) {
+      return res.status(400).json({ message: "Ce créneau est déjà complet." });
+    }
+  
+    // Calculer l'heure du nouveau passage
+    const start = new Date(`1970-01-01T${availability.startTime}`);
+    const rdvTime = new Date(start.getTime() + (appointmentsInSlot * 15 * 60000)); // 15 min/patient
+    const time = rdvTime.toTimeString().substring(0, 5);
+    const numeroPassage = appointmentsInSlot + 1;
+  
+    // Mise à jour
+    appointment.availabilityId = availability.id;
+    appointment.date = availability.date;
     appointment.time = time;
+    appointment.numeroPassage = numeroPassage;
   }
+  
 
   // ✅ Si c’est le médecin qui veut changer le statut
   if (userRole === "medecin" && appointment.medecinId === userId && status) {
@@ -278,6 +294,7 @@ export const updateAppointment = asyncHandler(async (req, res) => {
   }
 
   await appointment.save();
+  await appointment.reload();
 
   res.status(200).json({ message: "Rendez-vous mis à jour avec succès.", appointment });
 });

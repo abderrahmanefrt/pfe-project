@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 
-// Création des dossiers s'ils n'existent pas
 const documentDir = "uploads/documents";
 const photoDir = "uploads/photos";
 
@@ -12,72 +11,38 @@ const photoDir = "uploads/photos";
   }
 });
 
-const documentStorage = multer.diskStorage({
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, documentDir);
+    if (file.fieldname === "document") cb(null, documentDir);
+    else if (file.fieldname === "photo") cb(null, photoDir);
+    else cb(new Error("Champ de fichier non reconnu"), false);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
-// Configuration du stockage des photos (JPG/PNG)
-const photoStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, photoDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-// Filtre pour vérifier le type de fichier
-const fileFilter = (fileType) => (req, file, cb) => {
-  const allowedTypes = fileType === "document" ? ["application/pdf"] : ["image/jpeg", "image/png"];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === "document") {
+    if (file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Seuls les fichiers PDF sont autorisés."), false);
+  } else if (file.fieldname === "photo") {
+    if (["image/jpeg", "image/png"].includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Seuls les fichiers JPG/PNG sont autorisés."), false);
   } else {
-    cb(new Error(`Seuls les fichiers ${fileType === "document" ? "PDF" : "JPG/PNG"} sont autorisés.`), false);
+    cb(new Error("Champ de fichier non reconnu"), false);
   }
 };
 
-// Middleware de téléchargement des fichiers
+// 5 Mo max pour tout fichier (tu peux séparer si besoin avec des middlewares différents)
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      if (file.fieldname === "document") {
-        cb(null, documentDir);
-      } else if (file.fieldname === "photo") {
-        cb(null, photoDir);
-      } else {
-        cb(new Error("Champ de fichier non reconnu"), false);
-      }
-    },
-    filename: (req, file, cb) => {
-      cb(null, Date.now() + path.extname(file.originalname));
-    },
-  }),
-  fileFilter: (req, file, cb) => {
-    if (file.fieldname === "document") {
-      fileFilter("document")(req, file, cb);
-    } else if (file.fieldname === "photo") {
-      fileFilter("photo")(req, file, cb);
-    } else {
-      cb(new Error("Champ de fichier non reconnu"), false);
-    }
-  },
-  limits: {
-    fileSize: (req, file, cb) => {
-      if (file.fieldname === "document") {
-        cb(null, 5 * 1024 * 1024); // 5 Mo max pour les documents
-      } else if (file.fieldname === "photo") {
-        cb(null, 2 * 1024 * 1024); // 2 Mo max pour les photos
-      } else {
-        cb(new Error("Champ de fichier non reconnu"), false);
-      }
-    },
-  },
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
+export const uploadMedecinFiles = upload.fields([
+  { name: "document", maxCount: 1 },
+  { name: "photo", maxCount: 1 },
+]);
 export default upload;

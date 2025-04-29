@@ -24,17 +24,16 @@ const app = express();
 
 const port = process.env.PORT || 3000;
 
-// 🛠 Mettre CORS correctement
 app.use(cors({
   origin: 'http://localhost:5173', // ou l'URL de ton frontend
   credentials: true
 }));
 
-// 🛠 Mettre express.json() + cookieParser AVANT les routes
+
 app.use(express.json());
 app.use(cookieParser());
 
-// 🛠 Routes simples
+
 app.get('/', (req, res) => {
   res.send('Bienvenue sur l\'API de prise de rendez-vous 🚀');
 });
@@ -77,5 +76,12 @@ sequelize.sync({ alter: true })
 
 // Démarrage serveur
 app.listen(port, () => {
-  console.log(`🚀 Serveur en écoute sur le port ${port}`);
+  console.log(`Serveur démarré sur le port ${port}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`⚠️ Le port ${port} est déjà utilisé. Change-le dans .env ou libère le port.`);
+    process.exit(1);
+  } else {
+    throw err;
+  }
 });
