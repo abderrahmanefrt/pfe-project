@@ -17,7 +17,7 @@ import {
 
 
 const router = express.Router();
-router.get("/me", protectMedecin,getMedc);
+router.get("/me", getMedc);
 router.put("/profile", protectMedecin, updateProfile);
 router.put("/password", protectMedecin, updatePassword);
 router.delete("/deletemyaccount", protectMedecin, deleteMyAccount);
