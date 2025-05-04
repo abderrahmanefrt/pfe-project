@@ -200,14 +200,14 @@ export const deleteAvis = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Avis supprimé avec succès." });
 });
 
-
 export const getAdminStats = asyncHandler(async (req, res) => {
-  const totalPatients = await User.count(); // Renommer totalUsers en totalPatients
-
-  const approvedMedecins = await Medecin.count({ where: { status: "approved" } });
-
-  // 📌 Nombre total de rendez-vous
+  const totalUsers = await User.count({ where: { role: 'user' } }); // ou totalPatients si tu préfères
+  const totalDoctors = await Medecin.count({ where: { status: 'approved' } });
   const totalAppointments = await Appointment.count();
+
+  const pendingDoctorRequests = await Medecin.count({ where: { status: 'pending' } });
+  const pendingReviews = await Review.count({ where: { status: 'pending' } });
+  const totalRejectedReviews = await Review.count({ where: { status: 'rejected' } });
 
   const appointmentsPerDate = await Appointment.findAll({
     attributes: [
@@ -220,10 +220,14 @@ export const getAdminStats = asyncHandler(async (req, res) => {
   });
 
   res.json({
-    totalPatients,  // Utilise la variable correcte ici
-    approvedMedecins,
+    totalUsers,
+    totalDoctors,
     totalAppointments,
+    pendingDoctorRequests,
+    pendingReviews,
+    totalRejectedReviews,
     appointmentsPerDate
   });
 });
+
 
