@@ -202,7 +202,7 @@ export const deleteAvis = asyncHandler(async (req, res) => {
 
 
 export const getAdminStats = asyncHandler(async (req, res) => {
-  const totalUsers = await User.count();
+  const totalPatients = await User.count(); // Renommer totalUsers en totalPatients
 
   const approvedMedecins = await Medecin.count({ where: { status: "approved" } });
 
@@ -220,9 +220,10 @@ export const getAdminStats = asyncHandler(async (req, res) => {
   });
 
   res.json({
-    totalPatient,
+    totalPatients,  // Utilise la variable correcte ici
     approvedMedecins,
     totalAppointments,
     appointmentsPerDate
   });
 });
+
