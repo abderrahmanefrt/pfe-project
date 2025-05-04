@@ -25,16 +25,20 @@ const Avis = sequelize.define("Avis", {
       key: "id",
     },
   },
-  note: {  
+  note: {
     type: DataTypes.INTEGER,
     allowNull: false,
     validate: {
       min: 1,
-      max: 5,  
+      max: 5,
     },
   },
   commentaire: {
     type: DataTypes.TEXT,
+  },
+  status: {
+    type: DataTypes.ENUM("pending", "approved", "rejected"),
+    defaultValue: "pending",
   },
 });
 

@@ -201,33 +201,40 @@ export const deleteAvis = asyncHandler(async (req, res) => {
 });
 
 export const getAdminStats = asyncHandler(async (req, res) => {
-  const totalUsers = await User.count({ where: { role: 'user' } }); // ou totalPatients si tu préfères
-  const totalDoctors = await Medecin.count({ where: { status: 'approved' } });
-  const totalAppointments = await Appointment.count();
+  try {
+    const totalUsers = await User.count({ where: { role: 'user' } });
+    const totalDoctors = await Medecin.count({ where: { status: 'approved' } });
+    const totalAppointments = await Appointment.count();
 
-  const pendingDoctorRequests = await Medecin.count({ where: { status: 'pending' } });
-  const pendingReviews = await Avis.count({ where: { status: 'pending' } });
-  const totalRejectedReviews = await Avis.count({ where: { status: 'rejected' } });
+    const pendingDoctorRequests = await Medecin.count({ where: { status: 'pending' } });
+    const pendingReviews = await Avis.count({ where: { status: 'pending' } });
+    const totalRejectedReviews = await Avis.count({ where: { status: 'rejected' } });
 
-  const appointmentsPerDate = await Appointment.findAll({
-    attributes: [
-      "date",
-      [Sequelize.fn("COUNT", Sequelize.col("id")), "count"]
-    ],
-    group: ["date"],
-    order: [["date", "ASC"]],
-    raw: true,
-  });
+    const appointmentsPerDate = await Appointment.findAll({
+      attributes: [
+        "date",
+        [Sequelize.fn("COUNT", Sequelize.col("id")), "count"]
+      ],
+      group: ["date"],
+      order: [["date", "ASC"]],
+      raw: true,
+    });
 
-  res.json({
-    totalUsers,
-    totalDoctors,
-    totalAppointments,
-    pendingDoctorRequests,
-    pendingReviews,
-    totalRejectedReviews,
-    appointmentsPerDate
-  });
+    res.json({
+      totalUsers,
+      totalDoctors,
+      totalAppointments,
+      pendingDoctorRequests,
+      pendingReviews,
+      totalRejectedReviews,
+      appointmentsPerDate
+    });
+  } catch (error) {
+    console.error("Admin stats error:", error); // ← plus de détails ici
+    res.status(500).json({ message: "Server error in stats" });
+  }
 });
+
+
 
 
