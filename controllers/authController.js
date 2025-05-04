@@ -166,8 +166,16 @@ export const loginUser = asyncHandler(async (req, res) => {
       return res.status(401).json({ message: "Email ou mot de passe incorrect" });
     }
 
-    const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    return res.json({ message: "Connexion réussie", token });
+    const payload = { role: "admin" };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    return res.json({
+      id: null,  // Admin n'a pas de profil utilisateur comme les médecins ou patients
+      role: "admin",
+      accessToken,
+      message: "Connexion réussie"
+    });
   }
 
   // Vérification pour le médecin
@@ -199,7 +207,9 @@ export const loginUser = asyncHandler(async (req, res) => {
       lastname: medecin.lastname,
       email: medecin.email,
       specialite: medecin.specialite,
+      role: "medecin",  // Ajouter role ici
       accessToken,
+      message: "Connexion réussie"
     });
   }
 
@@ -226,12 +236,15 @@ export const loginUser = asyncHandler(async (req, res) => {
       firstname: user.firstname,
       lastname: user.lastname,
       email: user.email,
+      role: user.role,  // Ajouter role ici
       accessToken,
+      message: "Connexion réussie"
     });
   }
 
   return res.status(401).json({ message: "Email ou mot de passe incorrect" });
 });
+
 
 
 
