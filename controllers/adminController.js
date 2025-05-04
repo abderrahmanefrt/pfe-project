@@ -206,8 +206,8 @@ export const getAdminStats = asyncHandler(async (req, res) => {
   const totalAppointments = await Appointment.count();
 
   const pendingDoctorRequests = await Medecin.count({ where: { status: 'pending' } });
-  const pendingReviews = await Review.count({ where: { status: 'pending' } });
-  const totalRejectedReviews = await Review.count({ where: { status: 'rejected' } });
+  const pendingReviews = await Avis.count({ where: { status: 'pending' } });
+  const totalRejectedReviews = await Avis.count({ where: { status: 'rejected' } });
 
   const appointmentsPerDate = await Appointment.findAll({
     attributes: [
