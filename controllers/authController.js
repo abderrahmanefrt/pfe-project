@@ -64,33 +64,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 
 
-export const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ where: { email } });
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ message: "Email ou mot de passe incorrect" });
-  }
-
-  const payload = { id: user.id, email: user.email, role: user.role };
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: false, // true en production (HTTPS)
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-  });
-
-  res.json({
-    id: user.id,
-    firstname: user.firstname,
-    lastname: user.lastname,
-    email: user.email,
-    accessToken,
-  });
-});
 
 
 
@@ -183,39 +157,82 @@ const cleanedData = {
 
 
 //login medecin
-export const loginMedecin = asyncHandler(async (req, res) => {
+export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+
+  // Vérification pour l'admin
+  if (email === process.env.ADMIN_EMAIL) {
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+    }
+
+    const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    return res.json({ message: "Connexion réussie", token });
+  }
+
+  // Vérification pour le médecin
   const medecin = await Medecin.findOne({ where: { email } });
+  if (medecin) {
+    if (!(await bcrypt.compare(password, medecin.password))) {
+      return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+    }
 
-  if (!medecin || !(await bcrypt.compare(password, medecin.password))) {
-    return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+    // Vérification du statut du médecin
+    if (medecin.status !== "approved") {
+      return res.status(403).json({ message: "Votre compte est en attente de validation." });
+    }
+
+    const payload = { id: medecin.id, email: medecin.email, role: "medecin" };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+    });
+
+    return res.json({
+      id: medecin.id,
+      firstname: medecin.firstname,
+      lastname: medecin.lastname,
+      email: medecin.email,
+      specialite: medecin.specialite,
+      accessToken,
+    });
   }
 
-  // ❌ Vérifie si le compte est validé
-  if (medecin.status !== "approved") {
-    return res.status(403).json({ message: "Votre compte est en attente de validation par un administrateur." });
+  // Vérification pour l'utilisateur
+  const user = await User.findOne({ where: { email } });
+  if (user) {
+    if (!(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+    }
+
+    const payload = { id: user.id, email: user.email, role: user.role };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+    });
+
+    return res.json({
+      id: user.id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+      accessToken,
+    });
   }
 
-  const payload = { id: medecin.id, email: medecin.email, role: "medecin" };
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  res.json({
-    id: medecin.id,
-    firstname: medecin.firstname,
-    lastname: medecin.lastname,
-    email: medecin.email,
-    specialite: medecin.specialite,
-    accessToken,
-  });
+  return res.status(401).json({ message: "Email ou mot de passe incorrect" });
 });
+
 
 
 

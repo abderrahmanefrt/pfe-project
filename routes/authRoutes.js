@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { registerUser, loginUser, registerMedecin, loginMedecin,refreshToken  } from "../controllers/authController.js";
+import { registerUser, loginUser, registerMedecin,refreshToken  } from "../controllers/authController.js";
 import { loginAdmin } from "../controllers/adminAuthController.js";
 import upload from "../middlewares/uploads.js"; 
 
@@ -23,6 +23,5 @@ router.post(
   registerMedecin
 );
 
-router.post("/medecin/login", loginMedecin);
 
 export default router;
