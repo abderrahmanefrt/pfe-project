@@ -170,11 +170,19 @@ export const loginUser = asyncHandler(async (req, res) => {
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+    });
+
     return res.json({
-      id: null,  // Admin n'a pas de profil utilisateur comme les médecins ou patients
+      id: null, // Admin n'a pas de profil utilisateur
       role: "admin",
       accessToken,
-      message: "Connexion réussie"
+      refreshToken,
+      message: "Connexion réussie",
     });
   }
 
@@ -185,7 +193,6 @@ export const loginUser = asyncHandler(async (req, res) => {
       return res.status(401).json({ message: "Email ou mot de passe incorrect" });
     }
 
-    // Vérification du statut du médecin
     if (medecin.status !== "approved") {
       return res.status(403).json({ message: "Votre compte est en attente de validation." });
     }
@@ -198,7 +205,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({
@@ -207,13 +214,15 @@ export const loginUser = asyncHandler(async (req, res) => {
       lastname: medecin.lastname,
       email: medecin.email,
       specialite: medecin.specialite,
-      role: "medecin",  // Ajouter role ici
+      phone: medecin.phone,
+      role: "medecin",
       accessToken,
-      message: "Connexion réussie"
+      refreshToken,
+      message: "Connexion réussie",
     });
   }
 
-  // Vérification pour l'utilisateur
+  // Vérification pour le patient
   const user = await User.findOne({ where: { email } });
   if (user) {
     if (!(await bcrypt.compare(password, user.password))) {
@@ -228,7 +237,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({
@@ -236,14 +245,17 @@ export const loginUser = asyncHandler(async (req, res) => {
       firstname: user.firstname,
       lastname: user.lastname,
       email: user.email,
-      role: user.role,  // Ajouter role ici
+      phone: user.phone,
+      role: user.role,
       accessToken,
-      message: "Connexion réussie"
+      refreshToken,
+      message: "Connexion réussie",
     });
   }
 
   return res.status(401).json({ message: "Email ou mot de passe incorrect" });
 });
+
 
 
 
