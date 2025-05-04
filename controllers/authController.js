@@ -165,21 +165,27 @@ export const loginUser = asyncHandler(async (req, res) => {
     if (password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ message: "Email ou mot de passe incorrect" });
     }
-
-    const payload = { role: "admin" };
+  
+    const payload = { role: "admin", id: "admin" }; // Ajout d'un ID fictif
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
-
+  
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
+  
     return res.json({
-      id: null, // Admin n'a pas de profil utilisateur
+      id: "admin", // ID cohérent
       role: "admin",
+      accessToken,
+      firstname: "Admin", // Champs requis par le frontend
+      lastname: "System",
+      email: process.env.ADMIN_EMAIL,
+      phone: "", // Champ vide mais présent
+      specialite: "", // Champ vide mais présent
       accessToken,
       refreshToken,
       message: "Connexion réussie",

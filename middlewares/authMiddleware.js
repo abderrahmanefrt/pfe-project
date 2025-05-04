@@ -79,13 +79,25 @@ export const protect = asyncHandler(async (req, res, next) => {
 
 
 // Middleware pour protéger les routes admin uniquement
+// middleware/authMiddleware.js
 export const admin = (req, res, next) => {
-  console.log("🔹 Vérification admin - req.user:", req.user);
+  const token = req.headers.authorization?.split(' ')[1] || req.cookies.token;
+  
+  if (!token) {
+    return res.status(401).json({ message: "Token manquant" });
+  }
 
-  if (req.user && req.user.role === "admin") {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.role !== "admin") {
+      return res.status(403).json({ message: "Accès réservé aux administrateurs" });
+    }
+
+    req.user = decoded;
     next();
-  } else {
-    res.status(403).json({ message: "Accès refusé. Admin requis." });
+  } catch (error) {
+    return res.status(401).json({ message: "Token invalide ou expiré" });
   }
 };
 
