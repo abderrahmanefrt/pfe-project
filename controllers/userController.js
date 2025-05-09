@@ -107,25 +107,7 @@ export const getDoctorById = asyncHandler(async (req, res) => {
     },
     attributes: { 
       exclude: ["password", "document", "createdAt", "updatedAt"] 
-    },
-    include: [
-      {
-        model: Avis,
-        include: [{
-          model: User,
-          attributes: ["firstname", "lastname"]
-        }]
-      },
-      {
-        model: Availability,
-        where: {
-          date: {
-            [Op.gte]: new Date()
-          }
-        },
-        required: false
-      }
-    ]
+    }
   });
 
   if (!doctor) {
@@ -133,16 +115,7 @@ export const getDoctorById = asyncHandler(async (req, res) => {
     throw new Error("Doctor not found");
   }
 
-  // Calculate average rating
-  let averageRating = 0;
-  if (doctor.Avis && doctor.Avis.length > 0) {
-    averageRating = doctor.Avis.reduce((sum, review) => sum + review.rating, 0) / doctor.Avis.length;
-  }
-
-  res.status(200).json({
-    ...doctor.get({ plain: true }),
-    averageRating: parseFloat(averageRating.toFixed(1))
-  });
+  res.status(200).json(doctor.get({ plain: true }));
 });
 
 
