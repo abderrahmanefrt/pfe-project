@@ -21,7 +21,7 @@ export const getUser = asyncHandler(async (req, res) => {
 
 //update profile user
 /**
- * @desc Modifier le profil du médecin
+ * @desc Modifier le profil 
  * @route PUT /api/users/profile
  * @access user (authentifié)
  */
@@ -99,7 +99,51 @@ export const getMedicins =asyncHandler(async (req,res)=>{
   res.status(200).json(medecins);
 });
  
+export const getDoctorById = asyncHandler(async (req, res) => {
+  const doctor = await Medecin.findOne({
+    where: { 
+      id: req.params.id,
+      status: "approved" 
+    },
+    attributes: { 
+      exclude: ["password", "document", "createdAt", "updatedAt"] 
+    },
+    include: [
+      {
+        model: Avis,
+        include: [{
+          model: User,
+          attributes: ["firstname", "lastname"]
+        }]
+      },
+      {
+        model: Availability,
+        where: {
+          date: {
+            [Op.gte]: new Date()
+          }
+        },
+        required: false
+      }
+    ]
+  });
 
+  if (!doctor) {
+    res.status(404);
+    throw new Error("Doctor not found");
+  }
+
+  // Calculate average rating
+  let averageRating = 0;
+  if (doctor.Avis && doctor.Avis.length > 0) {
+    averageRating = doctor.Avis.reduce((sum, review) => sum + review.rating, 0) / doctor.Avis.length;
+  }
+
+  res.status(200).json({
+    ...doctor.get({ plain: true }),
+    averageRating: parseFloat(averageRating.toFixed(1))
+  });
+});
 
 
 

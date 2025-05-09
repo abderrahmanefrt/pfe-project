@@ -6,6 +6,7 @@ import {
   updatePassword,
   deleteMyAccount,
   getMedicins,
+  getDoctorById,
 } from "../controllers/userController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 const router = express.Router();
@@ -16,6 +17,7 @@ router.put("/profile",protect, updateProfile);
 router.put("/password", protect, updatePassword);
 router.delete("/deletemyaccount", protect, deleteMyAccount);
 router.get("/listofdoctors",protect,getMedicins)
+router.get("/doctor/:id", protect, getDoctorById);
 
 
 

@@ -118,16 +118,6 @@ if (selectedDate < today.setHours(0, 0, 0, 0)) {
 
 
 
-
-
-
-
-
-
-
-
-
-
 /**  
  * @desc Get all appointments (Admin only)
  * @route GET /api/appointments
