@@ -14,106 +14,128 @@ import { Op, Sequelize } from 'sequelize';
 
 
 export const createAppointment = asyncHandler(async (req, res) => {
-  const { medecinId, date, availabilityId } = req.body;
+  const { medecinId, date, requestedTime } = req.body;
   const userId = req.user.id;
+  const consultationDuration = 30; // Durée fixe de 30 minutes
 
-  if (!medecinId || !date || !availabilityId) {
+  // Validation des champs
+  if (!medecinId || !date || !requestedTime) {
     return res.status(400).json({ message: "Tous les champs sont requis" });
   }
+
+  // Vérification de la date
   const today = new Date();
-const selectedDate = new Date(date);
+  const selectedDate = new Date(date);
+  if (selectedDate < today.setHours(0, 0, 0, 0)) {
+    return res.status(400).json({ message: "Impossible de réserver pour une date passée." });
+  }
 
-if (selectedDate < today.setHours(0, 0, 0, 0)) {
-  return res.status(400).json({ message: "Impossible de réserver pour une date passée." });
-}
+  // Vérification utilisateur et médecin
+  const [user, medecin] = await Promise.all([
+    User.findByPk(userId),
+    Medecin.findByPk(medecinId, {
+      include: [{
+        model: Availability,
+        where: { date },
+        required: false
+      }]
+    })
+  ]);
 
-
-  const user = await User.findByPk(userId);
   if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
-
-  const medecin = await Medecin.findByPk(medecinId);
   if (!medecin) return res.status(404).json({ message: "Médecin non trouvé" });
-
   if (medecin.status !== "approved") {
     return res.status(403).json({ message: "Ce médecin n'est pas encore approuvé" });
   }
 
-  const availability = await Availability.findOne({
-    where: { id: availabilityId, medecinId, date },
-  });
-
-  if (!availability) {
-    return res.status(404).json({ message: "Créneau de disponibilité non trouvé" });
+  // Vérification que le médecin est disponible ce jour-là
+  if (!medecin.Availabilities || medecin.Availabilities.length === 0) {
+    return res.status(400).json({ message: "Le médecin n'est pas disponible cette journée" });
   }
 
-  // Vérifier que le patient n'a pas déjà un rendez-vous ce jour-là
-  const alreadyHasAppointment = await Appointment.findOne({
-    where: {
-      userId,
+  // Conversion en minutes pour les calculs
+  const timeToMinutes = (time) => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const reqTime = timeToMinutes(requestedTime);
+  let isTimeValid = false;
+  let availabilityId = null;
+
+  // Vérification que l'heure demandée est dans un créneau disponible
+  for (const avail of medecin.Availabilities) {
+    const startTime = timeToMinutes(avail.startTime);
+    const endTime = timeToMinutes(avail.endTime);
+    
+    if (reqTime >= startTime && reqTime + consultationDuration <= endTime) {
+      isTimeValid = true;
+      availabilityId = avail.id;
+      break;
+    }
+  }
+
+  if (!isTimeValid) {
+    return res.status(400).json({ message: "L'heure demandée n'est pas disponible" });
+  }
+
+  // Récupération des rendez-vous existants ce jour-là
+  const existingAppointments = await Appointment.findAll({
+    where: { 
       medecinId, 
       date,
-    }
-  });
-  
-
-  if (alreadyHasAppointment) {
-    return res.status(400).json({
-      message: "Vous avez déjà un rendez-vous pour ce jour-là.",
-    });
-  }
-
-  // Vérifier le nombre de patients déjà inscrits dans ce créneau
-  const appointmentsInCreneau = await Appointment.count({
-    where: {
-      medecinId,
-      date,
-      time: {
-        [Op.between]: [availability.startTime, availability.endTime]
-      }
-    }
+      status: ['pending', 'confirmed'] // On compte seulement les rendez-vous actifs
+    },
+    order: [['time', 'ASC']]
   });
 
-  if (appointmentsInCreneau >= availability.maxPatient) {
-    return res.status(400).json({ message: "Ce créneau est complet." });
+  // Vérification des conflits
+  for (const app of existingAppointments) {
+    const appStart = timeToMinutes(app.time);
+    const appEnd = appStart + consultationDuration;
+    
+    if (reqTime < appEnd && reqTime + consultationDuration > appStart) {
+      return res.status(400).json({ 
+        message: `Ce créneau est déjà réservé (${app.time})`
+      });
+    }
   }
 
-  // Calcul de l'heure du patient (simple incrémentation)
-  const start = new Date(`1970-01-01T${availability.startTime}`);
-  const rdvTime = new Date(start.getTime() + (appointmentsInCreneau * 15 * 60000)); // 15 minutes par patient
+  // Calcul du numéro de passage (1 créneau = 30 minutes = 1 passage)
+  const startOfDay = timeToMinutes('08:00'); // Heure d'ouverture standard
+  const passageNumber = ((reqTime - startOfDay) / consultationDuration) + 1;
 
-  const time = rdvTime.toTimeString().substring(0, 5); // format HH:mm
-  const numeroPassage = appointmentsInCreneau + 1;
+  if (passageNumber < 1 || !Number.isInteger(passageNumber)) {
+    return res.status(400).json({ message: "Heure de rendez-vous invalide" });
+  }
 
+  // Création du rendez-vous (status 'pending' en attente de confirmation)
   const newAppointment = await Appointment.create({
     userId,
     medecinId,
     date,
-    time,
-    numeroPassage
+    time: requestedTime,
+    availabilityId,
+    numeroPassage: passageNumber,
+    status: 'pending' // Non confirmé par défaut
   });
 
-  // Envoi de l'e-mail
+  // Notification au médecin
   try {
-    await sendEmailapp(
-      user.email,
-      "Confirmation de rendez-vous",
-      user.firstname,
-      user.lastname,
-      date,
-      time,
-      medecin.firstname,
-      medecin.lastname
+    await sendEmailToDoctor(
+      medecin.email,
+      "Nouvelle demande de rendez-vous",
+      `Vous avez une nouvelle demande de rendez-vous le ${date} à ${requestedTime} (Passage n°${passageNumber}).`
     );
   } catch (error) {
-    console.error("Erreur lors de l'envoi de l'email :", error);
+    console.error("Erreur notification médecin:", error);
   }
 
   res.status(201).json({
-    message: `Rendez-vous créé avec succès à ${time}. Vous êtes le ${numeroPassage}ᵉ patient pour ce créneau.`,
+    message: `Demande de rendez-vous enregistrée à ${requestedTime} (Passage n°${passageNumber}). En attente de confirmation par le médecin.`,
     appointment: newAppointment
   });
 });
-
 
 
 
