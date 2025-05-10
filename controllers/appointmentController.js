@@ -53,13 +53,23 @@ export const createAppointment = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Le médecin n'est pas disponible cette journée" });
   }
 
-  // Conversion en minutes pour les calculs
+  // Fonctions utilitaires
   const timeToMinutes = (time) => {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + m;
   };
 
-  const reqTime = timeToMinutes(requestedTime);
+  const roundUpToNextSlot = (time) => {
+    let [hours, minutes] = time.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes;
+    const roundedMinutes = Math.ceil(totalMinutes / consultationDuration) * consultationDuration;
+    const roundedHours = Math.floor(roundedMinutes / 60);
+    const roundedMins = roundedMinutes % 60;
+    return `${String(roundedHours).padStart(2, '0')}:${String(roundedMins).padStart(2, '0')}`;
+  };
+
+  const roundedTime = roundUpToNextSlot(requestedTime);
+  const reqTime = timeToMinutes(roundedTime);
   let isTimeValid = false;
   let availabilityId = null;
 
@@ -67,7 +77,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
   for (const avail of medecin.Availabilities) {
     const startTime = timeToMinutes(avail.startTime);
     const endTime = timeToMinutes(avail.endTime);
-    
+
     if (reqTime >= startTime && reqTime + consultationDuration <= endTime) {
       isTimeValid = true;
       availabilityId = avail.id;
@@ -76,15 +86,15 @@ export const createAppointment = asyncHandler(async (req, res) => {
   }
 
   if (!isTimeValid) {
-    return res.status(400).json({ message: "L'heure demandée n'est pas disponible" });
+    return res.status(400).json({ message: "L'heure demandée n'est pas disponible dans les créneaux du médecin" });
   }
 
   // Récupération des rendez-vous existants ce jour-là
   const existingAppointments = await Appointment.findAll({
-    where: { 
-      medecinId, 
+    where: {
+      medecinId,
       date,
-      status: ['pending', 'confirmed'] // On compte seulement les rendez-vous actifs
+      status: ['pending', 'confirmed'] // Seulement les rendez-vous actifs
     },
     order: [['time', 'ASC']]
   });
@@ -93,31 +103,31 @@ export const createAppointment = asyncHandler(async (req, res) => {
   for (const app of existingAppointments) {
     const appStart = timeToMinutes(app.time);
     const appEnd = appStart + consultationDuration;
-    
+
     if (reqTime < appEnd && reqTime + consultationDuration > appStart) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: `Ce créneau est déjà réservé (${app.time})`
       });
     }
   }
 
-  // Calcul du numéro de passage (1 créneau = 30 minutes = 1 passage)
-  const startOfDay = timeToMinutes('08:00'); // Heure d'ouverture standard
+  // Calcul du numéro de passage
+  const startOfDay = timeToMinutes('08:00'); // Par défaut
   const passageNumber = ((reqTime - startOfDay) / consultationDuration) + 1;
 
   if (passageNumber < 1 || !Number.isInteger(passageNumber)) {
     return res.status(400).json({ message: "Heure de rendez-vous invalide" });
   }
 
-  // Création du rendez-vous (status 'pending' en attente de confirmation)
+  // Création du rendez-vous
   const newAppointment = await Appointment.create({
     userId,
     medecinId,
     date,
-    time: requestedTime,
+    time: roundedTime,
     availabilityId,
     numeroPassage: passageNumber,
-    status: 'pending' // Non confirmé par défaut
+    status: 'pending'
   });
 
   // Notification au médecin
@@ -125,14 +135,14 @@ export const createAppointment = asyncHandler(async (req, res) => {
     await sendEmailToDoctor(
       medecin.email,
       "Nouvelle demande de rendez-vous",
-      `Vous avez une nouvelle demande de rendez-vous le ${date} à ${requestedTime} (Passage n°${passageNumber}).`
+      `Vous avez une nouvelle demande de rendez-vous le ${date} à ${roundedTime} (Passage n°${passageNumber}).`
     );
   } catch (error) {
     console.error("Erreur notification médecin:", error);
   }
 
   res.status(201).json({
-    message: `Demande de rendez-vous enregistrée à ${requestedTime} (Passage n°${passageNumber}). En attente de confirmation par le médecin.`,
+    message: `Demande de rendez-vous enregistrée à ${roundedTime} (Passage n°${passageNumber}). En attente de confirmation par le médecin.`,
     appointment: newAppointment
   });
 });
