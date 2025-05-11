@@ -423,3 +423,27 @@ export const updateAppointmentStatus = asyncHandler(async (req, res) => {
   res.status(200).json({ message: `Rendez-vous ${status} avec succès.`, appointment });
 });
 
+// @desc    Get booked time slots for a doctor on a specific date
+// @route   GET /api/appointments/booked
+// @access  Private
+export const getBookedAppointments = asyncHandler(async (req, res) => {
+  const { medecinId, date } = req.query;
+
+  if (!medecinId || !date) {
+    return res.status(400).json({ message: "Missing medecinId or date" });
+  }
+
+  const appointments = await Appointment.findAll({
+    where: {
+      medecinId,
+      date,
+      status: "accepted", // ou "pending" si tu veux inclure ceux en attente
+    },
+    attributes: ["requestedTime"],
+  });
+
+  const bookedTimes = appointments.map((appt) => appt.requestedTime);
+  res.json({ bookedTimes });
+});
+
+

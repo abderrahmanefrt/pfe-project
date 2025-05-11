@@ -9,6 +9,7 @@ import {
   rejectAppointment,
   getMedecinAppointments,
   updateAppointmentStatus,
+  getBookedAppointments
 } from "../controllers/appointmentController.js";
 import { protect, admin,protectMedecin ,patientOrAdmin} from "../middlewares/authMiddleware.js";
 
@@ -27,4 +28,6 @@ router.put("/:id/reject", protect, admin, rejectAppointment);
 router.get("/medecin", protectMedecin, getMedecinAppointments);
 router.get("/:id", protect, getAppointmentById);
 router.put("/:id/status", protectMedecin, updateAppointmentStatus);
+router.get("/booked", protect, getBookedAppointments);
+
 export default router;
