@@ -26,6 +26,14 @@ const Appointment = sequelize.define('Appointment', {
     allowNull: true,
     
   },
+  availabilityId: {
+    type: DataTypes.UUID, // Lier chaque rendez-vous à un créneau de disponibilité
+    allowNull: true,
+    references: {
+      model: "Availabilities", // Le modèle de disponibilité
+      key: "id",
+    }
+  },
   
   numeroPassage: {
     type: DataTypes.INTEGER,

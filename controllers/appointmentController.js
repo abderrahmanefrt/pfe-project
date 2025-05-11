@@ -11,8 +11,6 @@ import { Op, Sequelize } from 'sequelize';
  * @route POST /api/appointments
  * @access Private (User)
  */
-
-
 export const createAppointment = asyncHandler(async (req, res) => {
   const { medecinId, date, requestedTime } = req.body;
   const userId = req.user.id;
@@ -31,7 +29,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
   }
 
   // Récupération de l'utilisateur et du médecin + ses disponibilités ce jour-là
-  const [user, medecin] = await Promise.all([
+  const [user, medecin] = await Promise.all([ 
     User.findByPk(userId),
     Medecin.findByPk(medecinId, {
       include: [{
@@ -105,7 +103,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
     }
   });
 
-  if (appointmentsInSlot >= availability.maxPatients) {
+  if (appointmentsInSlot >= availability.maxPatient) {
     return res.status(400).json({
       message: "Le nombre maximal de patients pour ce créneau a été atteint."
     });
