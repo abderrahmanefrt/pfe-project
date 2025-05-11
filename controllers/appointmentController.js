@@ -16,21 +16,21 @@ import { Op, Sequelize } from 'sequelize';
 export const createAppointment = asyncHandler(async (req, res) => {
   const { medecinId, date, requestedTime } = req.body;
   const userId = req.user.id;
-  const consultationDuration = 30; // Durée fixe de 30 minutes
+  const consultationDuration = 30; // durée fixe de chaque rendez-vous en minutes
 
-  // Validation des champs
+  // Vérification des champs requis
   if (!medecinId || !date || !requestedTime) {
     return res.status(400).json({ message: "Tous les champs sont requis" });
   }
 
-  // Vérification de la date
+  // Vérifie si la date est passée
   const today = new Date();
   const selectedDate = new Date(date);
   if (selectedDate < today.setHours(0, 0, 0, 0)) {
     return res.status(400).json({ message: "Impossible de réserver pour une date passée." });
   }
 
-  // Vérification utilisateur et médecin
+  // Récupération de l'utilisateur et du médecin + ses disponibilités ce jour-là
   const [user, medecin] = await Promise.all([
     User.findByPk(userId),
     Medecin.findByPk(medecinId, {
@@ -48,17 +48,17 @@ export const createAppointment = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Ce médecin n'est pas encore approuvé" });
   }
 
-  // Vérification que le médecin est disponible ce jour-là
   if (!medecin.Availabilities || medecin.Availabilities.length === 0) {
     return res.status(400).json({ message: "Le médecin n'est pas disponible cette journée" });
   }
 
-  // Fonctions utilitaires
+  // Utilitaires pour convertir l'heure en minutes
   const timeToMinutes = (time) => {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + m;
   };
 
+  // Arrondit l'heure à un créneau de 30 minutes
   const roundUpToNextSlot = (time) => {
     let [hours, minutes] = time.split(':').map(Number);
     const totalMinutes = hours * 60 + minutes;
@@ -70,10 +70,11 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
   const roundedTime = roundUpToNextSlot(requestedTime);
   const reqTime = timeToMinutes(roundedTime);
+
   let isTimeValid = false;
   let availabilityId = null;
 
-  // Vérification que l'heure demandée est dans un créneau disponible
+  // Cherche le créneau où se situe l'heure demandée
   for (const avail of medecin.Availabilities) {
     const startTime = timeToMinutes(avail.startTime);
     const endTime = timeToMinutes(avail.endTime);
@@ -89,17 +90,37 @@ export const createAppointment = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "L'heure demandée n'est pas disponible dans les créneaux du médecin" });
   }
 
-  // Récupération des rendez-vous existants ce jour-là
+  // Récupération du créneau pour vérifier la limite de patients
+  const availability = await Availability.findByPk(availabilityId);
+  if (!availability) {
+    return res.status(400).json({ message: "Créneau non trouvé." });
+  }
+
+  // Vérification du nombre de patients déjà réservés dans ce créneau
+  const appointmentsInSlot = await Appointment.count({
+    where: {
+      availabilityId,
+      date,
+      status: ['pending', 'confirmed']
+    }
+  });
+
+  if (appointmentsInSlot >= availability.maxPatients) {
+    return res.status(400).json({
+      message: "Le nombre maximal de patients pour ce créneau a été atteint."
+    });
+  }
+
+  // Vérifie s’il y a un conflit exact d’horaire
   const existingAppointments = await Appointment.findAll({
     where: {
       medecinId,
       date,
-      status: ['pending', 'confirmed'] // Seulement les rendez-vous actifs
+      status: ['pending', 'confirmed']
     },
     order: [['time', 'ASC']]
   });
 
-  // Vérification des conflits
   for (const app of existingAppointments) {
     const appStart = timeToMinutes(app.time);
     const appEnd = appStart + consultationDuration;
@@ -111,8 +132,8 @@ export const createAppointment = asyncHandler(async (req, res) => {
     }
   }
 
-  // Calcul du numéro de passage
-  const startOfDay = timeToMinutes('08:00'); // Par défaut
+  // Calcule le numéro de passage dans la journée (à partir de 08:00)
+  const startOfDay = timeToMinutes('08:00');
   const passageNumber = ((reqTime - startOfDay) / consultationDuration) + 1;
 
   if (passageNumber < 1 || !Number.isInteger(passageNumber)) {
@@ -130,7 +151,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
     status: 'pending'
   });
 
-  // Notification au médecin
+  // Envoi d'un e-mail au médecin
   try {
     await sendEmailToDoctor(
       medecin.email,
@@ -146,6 +167,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
     appointment: newAppointment
   });
 });
+
 
 
 
