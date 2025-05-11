@@ -437,7 +437,7 @@ export const getBookedAppointments = asyncHandler(async (req, res) => {
     where: {
       medecinId,
       date,
-      status: "accepted", // ou "pending" si tu veux inclure ceux en attente
+      status: "pending", // ou "pending" si tu veux inclure ceux en attente
     },
     attributes: ["requestedTime"],
   });
