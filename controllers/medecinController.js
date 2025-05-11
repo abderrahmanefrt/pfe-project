@@ -93,14 +93,13 @@ export const deleteMyAccount = asyncHandler(async (req, res) => {
 
 
 export const searchMedecins = asyncHandler(async (req, res) => {
-  const { firstname, specialite, page = 1, limit = 10 } = req.query;
+  const { firstname, specialite, date, page = 1, limit = 10 } = req.query;
 
   const offset = (page - 1) * limit;
 
   const whereClause = {
-    status: "approved", 
+    status: "approved",
   };
-
 
   if (firstname) {
     whereClause.firstname = { [Op.iLike]: `%${firstname}%` };
@@ -110,13 +109,24 @@ export const searchMedecins = asyncHandler(async (req, res) => {
     whereClause.specialite = { [Op.iLike]: `%${specialite}%` };
   }
 
-
+  let includeAvailability = {};
+  if (date) {
+    includeAvailability = {
+      model: Availability,
+      where: {
+        date: date,
+      },
+      required: true, // Fait un INNER JOIN pour ne retourner que les médecins avec disponibilité
+    };
+  }
 
   const { count, rows } = await Medecin.findAndCountAll({
     where: whereClause,
+    include: date ? [includeAvailability] : [],
     offset: parseInt(offset),
     limit: parseInt(limit),
     attributes: { exclude: ["password", "createdAt", "updatedAt", "document"] },
+    distinct: true, // Important pour le count correct avec les includes
   });
 
   res.status(200).json({
