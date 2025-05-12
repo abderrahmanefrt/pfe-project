@@ -25,7 +25,7 @@ export const createAvis = asyncHandler(async (req, res) => {
   
 
   const appointment = await Appointment.findOne({
-    where: { userId: req.user.id, medecinId, status: "completed" },
+    where: { userId: req.user.id, medecinId, status: "accepted" },
   });
 
   if (!appointment) {
