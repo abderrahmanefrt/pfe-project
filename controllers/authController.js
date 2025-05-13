@@ -85,11 +85,12 @@ export const registerMedecin = asyncHandler(async (req, res) => {
   } = req.body;
   console.log("Fichiers reçus :", req.files);
 
-
+  // Validation des champs requis
   if (!firstname || !lastname || !email || !phone || !password || !specialite || !dateOfBirth || !licenseNumber || !address) {
     return res.status(400).json({ message: "Tous les champs sont obligatoires" });
   }
 
+  // Validation des fichiers
   if (!req.files || !req.files["document"]) {
     return res.status(400).json({ message: "Le document PDF est obligatoire" });
   }
@@ -98,12 +99,13 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "La photo est obligatoire" });
   }
 
+  // Vérification de l'existence d'un médecin avec le même email
   const existingMedecin = await Medecin.findOne({ where: { email } });
   if (existingMedecin) {
     return res.status(400).json({ message: "Le médecin existe déjà" });
   }
 
-  
+  // Géolocalisation de l'adresse
   const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
   const geoData = await geoRes.json();
 
@@ -114,43 +116,31 @@ export const registerMedecin = asyncHandler(async (req, res) => {
   const latitude = geoData[0].lat;
   const longitude = geoData[0].lon;
 
+  // Hashage du mot de passe
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Fonction pour nettoyer les guillemets parasites
   const clean = (val) => typeof val === "string" ? val.replace(/^"|"$/g, "") : val;
 
-const cleanedData = {
-  firstname: clean(firstname),
-  lastname: clean(lastname),
-  email: clean(email),
-  phone: clean(phone),
-  password: hashedPassword,
-  specialite: clean(specialite),
-  dateOfBirth: clean(dateOfBirth),
-  licenseNumber: clean(licenseNumber),
-  address: clean(address),
-  latitude,
-  longitude,
-  document: req.files["document"][0].path,
-  photo: req.files["photo"][0].path,
-};
-
-  const newMedecin = await Medecin.create({
-    firstname,
-    lastname,
-    email,
-    phone,
+  // Préparation des données nettoyées
+  const cleanedData = {
+    firstname: clean(firstname),
+    lastname: clean(lastname),
+    email: clean(email),
+    phone: clean(phone),
     password: hashedPassword,
-    specialite,
-    dateOfBirth,
-    licenseNumber,
-    address,
+    specialite: clean(specialite),
+    dateOfBirth: clean(dateOfBirth),
+    licenseNumber: clean(licenseNumber),
+    address: clean(address),
     latitude,
     longitude,
     document: req.files["document"][0].path,
     photo: req.files["photo"][0].path,
-  });
+  };
 
-
+  // Création du médecin avec les données nettoyées
+  const newMedecin = await Medecin.create(cleanedData);
 
   res.status(201).json({ message: "Médecin créé avec succès", medecin: newMedecin });
 });
