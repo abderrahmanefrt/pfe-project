@@ -91,9 +91,9 @@ export const deleteAvis = asyncHandler(async (req, res) => {
 
 
 export const getAverageRating = async (req, res) => {
-  const medecinId = req.params.id;
-
   try {
+    const medecinId = req.params.id;
+
     const result = await Avis.findAll({
       where: { medecinId },
       attributes: [
@@ -102,13 +102,11 @@ export const getAverageRating = async (req, res) => {
       raw: true,
     });
 
-    const averageRating = result[0].averageRating
-      ? parseFloat(result[0].averageRating).toFixed(1)
-      : null;
+    const avg = parseFloat(result[0].averageRating) || 0;
 
-    res.status(200).json({ averageRating });
+    res.json({ averageRating: avg.toFixed(1) }); // Exemple : { averageRating: "4.2" }
   } catch (error) {
-    console.error("Erreur lors du calcul de la note moyenne :", error);
-    res.status(500).json({ message: "Erreur serveur" });
+    console.error("Erreur lors du calcul de la moyenne :", error);
+    res.status(500).json({ message: "Erreur lors du calcul de la moyenne" });
   }
 };
