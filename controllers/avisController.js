@@ -94,19 +94,31 @@ export const getAverageRating = async (req, res) => {
   try {
     const medecinId = req.params.id;
 
+    // Validate medecinId is a number
+    if (isNaN(medecinId)) {
+      return res.status(400).json({ message: "Invalid doctor ID" });
+    }
+
     const result = await Avis.findAll({
-      where: { medecinId },
+      where: { medecinId: Number(medecinId) },
       attributes: [
-        [sequelize.fn('AVG', sequelize.col('rating')), 'averageRating']
+        [sequelize.fn('AVG', sequelize.col('note')), 'averageRating']  // Changed from 'rating' to 'note'
       ],
       raw: true,
     });
 
-    const avg = parseFloat(result[0].averageRating) || 0;
+    // Handle case where no ratings exist
+    if (!result || !result[0] || result[0].averageRating === null) {
+      return res.json({ averageRating: "0.0" });
+    }
 
-    res.json({ averageRating: avg.toFixed(1) }); // Exemple : { averageRating: "4.2" }
+    const avg = parseFloat(result[0].averageRating) || 0;
+    res.json({ averageRating: avg.toFixed(1) });
   } catch (error) {
-    console.error("Erreur lors du calcul de la moyenne :", error);
-    res.status(500).json({ message: "Erreur lors du calcul de la moyenne" });
+    console.error("Error calculating average rating:", error);
+    res.status(500).json({ 
+      message: "Error calculating average rating",
+      error: error.message 
+    });
   }
 };
