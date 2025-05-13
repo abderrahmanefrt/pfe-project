@@ -26,7 +26,7 @@ const Avis = sequelize.define("Avis", {
     },
   },
   note: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
     validate: {
       min: 1,
