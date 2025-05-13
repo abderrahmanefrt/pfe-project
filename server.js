@@ -14,6 +14,12 @@ import availabilityRoutes from "./routes/availabilityRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import upload from "./middlewares/uploads.js";
 
+
+import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+
 import sequelize from "./config/db.js";
 import "./utils/cronJobs.js";
 import "./models/relations.js";
@@ -23,6 +29,9 @@ dotenv.config();
 const app = express();
 
 const port = process.env.PORT || 3000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 
 app.use(cors({
   origin: 'http://localhost:5173', // ou l'URL de ton frontend
@@ -43,6 +52,8 @@ app.get('/api', (req, res) => {
 app.get("/api/auth/test", (req, res) => {
   res.json({ message: "Auth route OK" });
 });
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // 🛠 Routes principales
 app.use("/api/users", userRoutes);
