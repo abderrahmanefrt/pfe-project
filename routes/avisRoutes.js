@@ -4,6 +4,7 @@ import {
   createAvis,
   getAvisByMedecin,
   deleteAvis,
+  getAverageRating
 } from "../controllers/avisController.js";
 
 const router = express.Router();
@@ -12,5 +13,6 @@ const router = express.Router();
 router.post("/", protect, createAvis);
 router.get("/:medecinId", getAvisByMedecin);
 router.delete("/:id", protect, deleteAvis);
+router.get('/medecin/:id/average-rating', getAverageRating);
 
 export default router;

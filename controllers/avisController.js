@@ -87,3 +87,28 @@ export const deleteAvis = asyncHandler(async (req, res) => {
   await avis.destroy();
   res.status(200).json({ message: "Avis supprimé avec succès" });
 });
+
+
+
+export const getAverageRating = async (req, res) => {
+  const medecinId = req.params.id;
+
+  try {
+    const result = await Avis.findAll({
+      where: { medecinId },
+      attributes: [
+        [sequelize.fn('AVG', sequelize.col('rating')), 'averageRating']
+      ],
+      raw: true,
+    });
+
+    const averageRating = result[0].averageRating
+      ? parseFloat(result[0].averageRating).toFixed(1)
+      : null;
+
+    res.status(200).json({ averageRating });
+  } catch (error) {
+    console.error("Erreur lors du calcul de la note moyenne :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
