@@ -17,6 +17,7 @@ const router = express.Router();
 
 router.post("/", protect, createAppointment);
 router.get("/", protect, patientOrAdmin, getAllAppointments); 
+router.get("/booked", protect, getBookedAppointments);
 
 router.put("/:id", protect, updateAppointment);
 router.delete("/:id", protect, deleteAppointment);
@@ -28,6 +29,5 @@ router.put("/:id/reject", protect, admin, rejectAppointment);
 router.get("/medecin", protectMedecin, getMedecinAppointments);
 router.get("/:id", protect, getAppointmentById);
 router.put("/:id/status", protectMedecin, updateAppointmentStatus);
-router.get("/booked", protect, getBookedAppointments);
 
 export default router;
