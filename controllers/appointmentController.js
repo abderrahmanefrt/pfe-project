@@ -454,18 +454,55 @@ export const getBookedAppointments = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Missing medecinId or date" });
   }
 
+  // Récupère toutes les disponibilités du médecin ce jour-là
+  const availabilities = await Availability.findAll({
+    where: {
+      medecinId,
+      date,
+    },
+  });
+
+  // Récupère tous les rendez-vous "pending" ou "confirmed"
   const appointments = await Appointment.findAll({
     where: {
       medecinId,
       date,
-      status: ["pending", "confirmed"]
+      status: ["pending", "confirmed"],
     },
-    attributes: ["time"]
+    attributes: ["time"],
   });
 
-  const bookedTimes = appointments.map((appt) => appt.time);
-  res.json({ bookedTimes });
+  const slots = [];
+
+  for (const slot of availabilities) {
+    const start = new Date(`${date}T${slot.startTime}`);
+    const end = new Date(`${date}T${slot.endTime}`);
+    const maxPatients = slot.maxPatients;
+    const duration = 30; // minutes
+
+    const current = new Date(start);
+
+    while (current < end) {
+      const timeStr = current.toTimeString().slice(0, 5); // HH:MM
+
+      // Compte le nombre de patients réservés à ce créneau
+      const bookedCount = appointments.filter((appt) => {
+        return appt.time.slice(0, 5) === timeStr;
+      }).length;
+
+      slots.push({
+        time: timeStr,
+        booked: bookedCount,
+        maxPatients,
+      });
+
+      current.setMinutes(current.getMinutes() + duration);
+    }
+  }
+
+  res.json(slots);
 });
+
 
 
 
