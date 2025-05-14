@@ -3,6 +3,8 @@ import Avis from "../models/Avis.js";
 import Appointment from "../models/Appointment.js";
 import Medecin from "../models/Medecin.js";
 import User from "../models/Users.js";
+import sequelize from '../config/db.js';
+
 
 
 /**

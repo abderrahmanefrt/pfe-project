@@ -3,6 +3,7 @@ import sequelize from "../config/db.js";
 import User from "./Users.js";
 import Medecin from "./Medecin.js";
 
+
 const Avis = sequelize.define("Avis", {
   id: {
     type: DataTypes.INTEGER,
