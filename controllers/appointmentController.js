@@ -266,7 +266,7 @@ export const getAppointmentById = asyncHandler(async (req, res) => {
 
 export const updateAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { date, time, status } = req.body;
+  const { availabilityId, status } = req.body;
   const userId = req.user.id;
   const userRole = req.user.role;
 
@@ -279,18 +279,18 @@ export const updateAppointment = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Rendez-vous déjà accepté, il ne peut plus être modifié." });
   }
 
-  // ✅ Si c’est le patient qui modifie sa date/heure
+  // ✅ Patient : mise à jour du créneau de rendez-vous
   if (userRole === "patient" && appointment.userId === userId) {
-    const { availabilityId } = req.body;
+    const { availabilityId, time: newTime } = req.body;
   
-    if (!availabilityId) {
-      return res.status(400).json({ message: "Le nouveau créneau (availabilityId) est requis." });
+    if (!availabilityId || !newTime) {
+      return res.status(400).json({ message: "Le créneau et l'heure sont requis." });
     }
   
     const availability = await Availability.findOne({
       where: {
         id: availabilityId,
-        medecinId: appointment.medecinId
+        medecinId: appointment.medecinId,
       }
     });
   
@@ -305,33 +305,45 @@ export const updateAppointment = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: "Impossible de déplacer le rendez-vous vers une date passée." });
     }
   
-    // Vérifier que le créneau n'est pas complet
-    const appointmentsInSlot = await Appointment.count({
+    // Vérifier que l'heure demandée est bien dans le créneau
+    const start = new Date(`1970-01-01T${availability.startTime}`);
+    const end = new Date(`1970-01-01T${availability.endTime}`);
+    const requestedTime = new Date(`1970-01-01T${newTime}`);
+  
+    if (requestedTime < start || requestedTime >= end) {
+      return res.status(400).json({ message: "L'heure demandée est en dehors du créneau." });
+    }
+  
+    // Vérifier que l'heure demandée n'est pas déjà prise
+    const conflict = await Appointment.findOne({
       where: {
         availabilityId,
+        time: newTime,
+        id: { [Op.ne]: appointment.id }, // exclure le rendez-vous actuel
       }
     });
   
-    if (appointmentsInSlot >= availability.maxPatient) {
-      return res.status(400).json({ message: "Ce créneau est déjà complet." });
+    if (conflict) {
+      return res.status(400).json({ message: "Un autre rendez-vous existe déjà à cette heure." });
     }
-  
-    // Calculer l'heure du nouveau passage
-    const start = new Date(`1970-01-01T${availability.startTime}`);
-    const rdvTime = new Date(start.getTime() + (appointmentsInSlot * 15 * 60000)); // 15 min/patient
-    const time = rdvTime.toTimeString().substring(0, 5);
-    const numeroPassage = appointmentsInSlot + 1;
   
     // Mise à jour
     appointment.availabilityId = availability.id;
     appointment.date = availability.date;
-    appointment.time = time;
-    appointment.numeroPassage = numeroPassage;
+    appointment.time = newTime;
   }
   
 
-  // ✅ Si c’est le médecin qui veut changer le statut
-  if (userRole === "medecin" && appointment.medecinId === userId && status) {
+  // ✅ Médecin : mise à jour du statut
+  if (userRole === "medecin") {
+    if (appointment.medecinId !== userId) {
+      return res.status(403).json({ message: "Accès refusé. Vous ne pouvez modifier que vos propres rendez-vous." });
+    }
+
+    if (!status) {
+      return res.status(400).json({ message: "Le champ 'status' est requis pour la mise à jour." });
+    }
+
     appointment.status = status;
   }
 
@@ -340,6 +352,7 @@ export const updateAppointment = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Rendez-vous mis à jour avec succès.", appointment });
 });
+
 
 
 
