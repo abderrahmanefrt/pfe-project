@@ -446,6 +446,7 @@ export const updateAppointmentStatus = asyncHandler(async (req, res) => {
 // @desc    Get booked time slots for a doctor on a specific date
 // @route   GET /api/appointments/booked
 // @access  Private
+
 export const getBookedAppointments = asyncHandler(async (req, res) => {
   const { medecinId, date } = req.query;
 
@@ -457,13 +458,15 @@ export const getBookedAppointments = asyncHandler(async (req, res) => {
     where: {
       medecinId,
       date,
-      status: "pending", // ou "pending" si tu veux inclure ceux en attente
+      status: ["pending", "confirmed"]
     },
-    attributes: ["requestedTime"],
+    attributes: ["time"]
   });
 
-  const bookedTimes = appointments.map((appt) => appt.requestedTime);
+  const bookedTimes = appointments.map((appt) => appt.time);
   res.json({ bookedTimes });
 });
+
+
 
 
