@@ -13,6 +13,8 @@ import availabilityRoutes from "./routes/availabilityRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 import upload from "./middlewares/uploads.js";
+import contactRoutes from "./controllers/contact.js"; 
+
 
 
 import path from "path";
@@ -64,6 +66,8 @@ app.use("/api/avis", avisRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/api/contact", contactRoutes);
+
 
 // 🛠 Middleware erreurs
 app.use(errorHandler);
