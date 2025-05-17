@@ -7,6 +7,8 @@ import sequelize from '../config/db.js';
 
 
 
+
+
 /**
  * @desc Laisser un avis sur un médecin
  * @route POST /api/avis
@@ -96,31 +98,24 @@ export const getAverageRating = async (req, res) => {
   try {
     const medecinId = req.params.id;
 
-    // Validate medecinId is a number
     if (isNaN(medecinId)) {
-      return res.status(400).json({ message: "Invalid doctor ID" });
+      return res.status(400).json({ message: "ID invalide" });
     }
 
     const result = await Avis.findAll({
       where: { medecinId: Number(medecinId) },
-      attributes: [
-        [sequelize.fn('AVG', sequelize.col('note')), 'averageRating']  // Changed from 'rating' to 'note'
-      ],
+      attributes: [[sequelize.fn('AVG', sequelize.col('note')), 'averageRating']],
       raw: true,
     });
 
-    // Handle case where no ratings exist
-    if (!result || !result[0] || result[0].averageRating === null) {
+    const avg = result[0]?.averageRating;
+    if (avg === null) {
       return res.json({ averageRating: "0.0" });
     }
 
-    const avg = parseFloat(result[0].averageRating) || 0;
-    res.json({ averageRating: avg.toFixed(1) });
+    res.json({ averageRating: parseFloat(avg).toFixed(1) });
   } catch (error) {
-    console.error("Error calculating average rating:", error);
-    res.status(500).json({ 
-      message: "Error calculating average rating",
-      error: error.message 
-    });
+    console.error("Erreur moyenne des avis:", error);
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 };

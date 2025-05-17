@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
+
 const Medecin = sequelize.define(
   "Medecin",
   {
@@ -83,5 +84,6 @@ const Medecin = sequelize.define(
     timestamps: false,
   }
 );
+
 
 export default Medecin;

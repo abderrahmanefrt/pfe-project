@@ -3,6 +3,9 @@ import bcrypt from "bcrypt";
 import Medecin from "../models/Medecin.js";
 import { Op } from "sequelize";
 import {  Sequelize } from "sequelize";
+import Avis from "../models/Avis.js";
+import Availability from "../models/Availability.js";
+import { fn, col, literal } from "sequelize";
 
 
 
@@ -93,14 +96,13 @@ export const deleteMyAccount = asyncHandler(async (req, res) => {
 
 
 export const searchMedecins = asyncHandler(async (req, res) => {
-  const { firstname, specialite, page = 1, limit = 10 } = req.query;
+  const { firstname, specialite, page = 1, limit = 10, rating, date } = req.query;
 
   const offset = (page - 1) * limit;
 
   const whereClause = {
-    status: "approved", 
+    status: "approved",
   };
-
 
   if (firstname) {
     whereClause.firstname = { [Op.iLike]: `%${firstname}%` };
@@ -110,22 +112,71 @@ export const searchMedecins = asyncHandler(async (req, res) => {
     whereClause.specialite = { [Op.iLike]: `%${specialite}%` };
   }
 
+  let availabilityClause = {};
+  if (date) {
+    availabilityClause.date = date;
+  }
 
+  // Étape 1 : compter les médecins (distincts)
+  const count = await Medecin.count({
+    where: whereClause,
+    include: [
+      {
+        model: Availability,
+        as: "availabilities",
+        where: Object.keys(availabilityClause).length > 0 ? availabilityClause : undefined,
+        required: !!date,
+      },
+      {
+        model: Avis,
+        as: "avis",
+        where: { status: "approved" },
+        required: false,
+      },
+    ],
+    distinct: true,
+    col: "id",
+  });
 
-  const { count, rows } = await Medecin.findAndCountAll({
+  // Étape 2 : récupérer les médecins avec détails
+  const medecins = await Medecin.findAll({
     where: whereClause,
     offset: parseInt(offset),
     limit: parseInt(limit),
-    attributes: { exclude: ["password", "createdAt", "updatedAt", "document"] },
+    attributes: {
+      exclude: ["password", "createdAt", "updatedAt", "document"],
+      include: [[fn("AVG", literal('"avis"."note"')), "averageRating"]],
+    },
+    include: [
+      {
+        model: Avis,
+        as: "avis",
+        attributes: [], // on n’a pas besoin d’afficher chaque note
+        where: { status: "approved" },
+        required: false,
+      },
+      {
+        model: Availability,
+        as: "availabilities",
+        attributes: ["date", "startTime", "endTime"],
+        where: Object.keys(availabilityClause).length > 0 ? availabilityClause : undefined,
+        required: !!date,
+      },
+    ],
+    group: ["Medecin.id", "availabilities.id"],
+    having: rating ? literal(`AVG("avis"."note") >= ${parseFloat(rating)}`) : undefined,
+    subQuery: false,
   });
 
   res.status(200).json({
     total: count,
     currentPage: parseInt(page),
     totalPages: Math.ceil(count / limit),
-    medecins: rows,
+    medecins,
   });
 });
+
+
 
 
 
