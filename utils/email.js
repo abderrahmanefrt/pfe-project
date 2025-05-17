@@ -10,24 +10,25 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (to, subject="inscription sur la platforme", firstname="patient") => {
+export const sendEmail = async (to, subject = "Registration on the platform", firstname = "patient") => {
   try {
     const mailOptions = {
       from: process.env.SMTP_FROM,
-      to: to, 
+      to: to,
       subject: subject,
-      text: `Bonjour ${firstname},\n\nBienvenue sur notre plateforme de gestion des rendez-vous médicaux ! Nous sommes ravis de vous compter parmi nous.\n\nSi vous avez des questions, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe de support`,
+      text: `Hello ${firstname},\n\nWelcome to our medical appointment management platform! We are happy to have you with us.\n\nIf you have any questions, feel free to contact us.\n\nBest regards,\nThe support team`,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email envoyé :", info.response);
+    console.log("✅ Email sent:", info.response);
   } catch (error) {
-    console.error("❌ Erreur d'envoi d'email :", error);
+    console.error("❌ Email sending error:", error);
   }
 };
+
 export const sendEmailapp = async (
   to,
-  subject = "Confirmation de rendez-vous",
+  subject = "Appointment Request Submitted",
   firstname = "patient",
   date,
   time,
@@ -38,35 +39,37 @@ export const sendEmailapp = async (
       from: process.env.SMTP_FROM,
       to: to,
       subject: subject,
-      text: `Bonjour ${firstname},\n\nVotre rendez  avec le Dr. ${doctorName}  pour le ${date} à ${time}  est enregistrer  .\n\nSi vous avez des questions, n'hésitez pas à nous contacter.\n\nCordialement,\nL'équipe de support`,
+      text: `Hello ${firstname},\n\nYour appointment with Dr. ${doctorName} on ${date} at ${time} has been successfully requested.\n\n⏳ Please note: your appointment is currently pending and awaiting confirmation from the doctor. You will receive a notification once it is confirmed.\n\nIf you have any questions, feel free to contact us.\n\nBest regards,\nThe support team`,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email envoyé :", info.response);
+    console.log("✅ Email sent:", info.response);
   } catch (error) {
-    console.error("❌ Erreur d'envoi d'email :", error);
+    console.error("❌ Email sending error:", error);
   }
 };
+
 export const sendEmailmed = async (
   to,
   subject = "Notification",
-  firstname = "Utilisateur",
-  message = "Vous avez une nouvelle notification."
+  firstname = "User",
+  message = "You have a new notification."
 ) => {
   try {
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: to,
       subject: subject,
-      text: `Bonjour ${firstname},\n\n${message}\n\nCordialement,\nL'équipe de support`,
+      text: `Hello ${firstname},\n\n${message}\n\nBest regards,\nThe support team`,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email envoyé :", info.response);
+    console.log("✅ Email sent:", info.response);
   } catch (error) {
-    console.error("❌ Erreur d'envoi d'email :", error);
+    console.error("❌ Email sending error:", error);
   }
 };
+
 export const sendEmailrap = async (to, subject, text) => {
   try {
     const mailOptions = {
@@ -77,8 +80,8 @@ export const sendEmailrap = async (to, subject, text) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email envoyé :", info.response);
+    console.log("✅ Email sent:", info.response);
   } catch (error) {
-    console.error("❌ Erreur d'envoi d'email :", error);
+    console.error("❌ Email sending error:", error);
   }
 };

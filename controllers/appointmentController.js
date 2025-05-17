@@ -4,6 +4,7 @@ import User from "../models/Users.js";
 import Medecin from "../models/Medecin.js";
 import Availability from "../models/Availability.js";
 import { sendEmailapp } from "../utils/email.js"
+import { sendEmailrap } from "../utils/email.js"
 import { Op, Sequelize } from 'sequelize';
 
 /**  
@@ -151,7 +152,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
   // Envoi d'un e-mail au médecin
   try {
-    await sendEmailToDoctor(
+    await sendEmailapp(
       medecin.email,
       "Nouvelle demande de rendez-vous",
       `Vous avez une nouvelle demande de rendez-vous le ${date} à ${roundedTime} (Passage n°${passageNumber}).`
@@ -159,12 +160,26 @@ export const createAppointment = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("Erreur notification médecin:", error);
   }
+  try {
+    await sendEmailapp(
+      user.email,
+      "Appointment Request Submitted",
+      user.firstname,
+      date,
+      roundedTime,
+      `${medecin.firstname} ${medecin.lastname}`
+    );
+  } catch (error) {
+    console.error("Erreur notification patient:", error);
+  }
 
   res.status(201).json({
     message: `Demande de rendez-vous enregistrée à ${roundedTime} (Passage n°${passageNumber}). En attente de confirmation par le médecin.`,
     appointment: newAppointment
   });
 });
+
+
 
 
 
@@ -382,7 +397,7 @@ export const rejectAppointment = asyncHandler(async (req, res) => {
 /**  
  * @desc Delete an appointment (User can delete own, Admin can delete any)
  * @route DELETE /api/appointments/:id
- * @access Private (User/Admin)
+ * @access Private (User)
  */
 export const deleteAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -441,9 +456,45 @@ export const updateAppointmentStatus = asyncHandler(async (req, res) => {
   appointment.status = status;
   await appointment.save();
 
-  res.status(200).json({ message: `Rendez-vous ${status} avec succès.`, appointment });
-});
+  // ✅ Récupérer l'utilisateur séparément sans modifier le modèle
+  try {
+    const user = await User.findByPk(appointment.userId);
+if (user) {
+  const subject =
+    status === "accepter"
+      ? "Appointment Accepted"
+      : "Appointment Declined";
 
+  const text =
+    status === "accepter"
+      ? `Dear ${user.firstname},
+
+We are pleased to inform you that your appointment request has been accepted. Please make sure to be present on the scheduled date and time.
+
+If you have any questions or need to reschedule, feel free to contact us.
+
+Best regards,
+Support Team`
+      : `Dear ${user.firstname},
+
+We regret to inform you that your appointment request has been declined. This could be due to scheduling conflicts, unavailability, or other professional constraints.
+
+We apologize for any inconvenience caused and encourage you to try booking another available slot or contact us for further assistance.
+
+Best regards,
+Support Team`;
+
+  await sendEmailrap(user.email, subject, text);
+}
+
+  } catch (emailError) {
+    console.error("❌ Erreur lors de l'envoi de l'email :", emailError);
+  }
+
+  res
+    .status(200)
+    .json({ message: `Rendez-vous ${status} avec succès.`, appointment });
+});
 // @desc    Get booked time slots for a doctor on a specific date
 // @route   GET /api/appointments/booked
 // @access  Private
@@ -459,7 +510,9 @@ export const getBookedAppointments = asyncHandler(async (req, res) => {
     where: {
       medecinId,
       date,
-      status: ["pending", "confirmed"]
+      status: {
+        [Op.in]: ["pending", "accepter"]
+      }
     },
     attributes: ["time"]
   });

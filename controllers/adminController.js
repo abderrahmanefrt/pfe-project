@@ -86,11 +86,12 @@ export const approveMedecin = asyncHandler(async (req, res) => {
     
     try {
       await sendEmailmed(
-        medecin.email, 
-        "Votre compte a été approuvé", 
-        medecin.firstname, 
-        "Félicitations, votre compte a été approuvé avec succès. Vous pouvez maintenant recevoir des rendez-vous de patients."
+        medecin.email,
+        "Your account has been approved",
+        medecin.firstname,
+        "Congratulations, your account has been successfully approved. You can now receive appointments from patients."
       );
+      
       console.log("✅ Email d'approbation envoyé au médecin");
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi de l'email d'approbation :", error);
@@ -123,11 +124,12 @@ export const rejectMedecin = asyncHandler(async (req, res) => {
     
     try {
       await sendEmailmed(
-        medecin.email, 
-        "Votre compte a été rejeté", 
-        medecin.firstname, 
-        "Nous regrettons de vous informer que votre compte a été rejeté. Pour plus d'informations, veuillez contacter notre support."
+        medecin.email,
+        "Your account has been rejected",
+        medecin.firstname,
+        "We regret to inform you that your account has been rejected. For more information, please contact our support team."
       );
+    
       console.log("✅ Email de rejet envoyé au médecin");
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi de l'email de rejet :", error);

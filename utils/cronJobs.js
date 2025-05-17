@@ -32,17 +32,17 @@ cron.schedule("0 8 * * *", async () => {
       const { email, firstname } = appointment.User;
 
       if (!sentEmails.has(email)) { // Vérifie si l'email a déjà été envoyé
-        const subject = "📅 Rappel de votre rendez-vous médical";
+        const subject = "📅 Reminder for your medical appointment";
       const message = `
-Bonjour ${firstname},  
+Hello ${firstname},  
 
-✨ Ceci est un rappel pour vous informer que vous avez un rendez-vous médical prévu demain.  
+✨ This is a reminder to inform you that you have a medical appointment scheduled for tomorrow.  
 
-📍 Merci de bien vouloir être à l'heure.  
-🕒 Si vous avez des questions ou souhaitez annuler, n'hésitez pas à nous contacter.  
+📍 Please make sure to be on time.  
+🕒 If you have any questions or wish to cancel, feel free to contact us.  
 
-Cordialement,  
-L'équipe médicale.`;
+Best regards,  
+The medical team.`;
 
         await sendEmailrap(email, subject, message);
         console.log(`📩 Email envoyé à ${email} pour un rendez-vous le ${moment(appointment.date).format("DD/MM/YYYY à HH:mm")}`);
