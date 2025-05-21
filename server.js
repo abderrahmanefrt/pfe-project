@@ -13,7 +13,7 @@ import availabilityRoutes from "./routes/availabilityRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 import upload from "./middlewares/uploads.js";
-import contactRoutes from "./routes/contactRoutes.js";
+import contactRoutes from "./routes/contactroutes.js";
 
 
 

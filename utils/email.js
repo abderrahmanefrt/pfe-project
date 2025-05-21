@@ -85,3 +85,26 @@ export const sendEmailrap = async (to, subject, text) => {
     console.error("❌ Email sending error:", error);
   }
 };
+
+export const sendCancellationEmail = async (
+  to,
+  firstname,
+  lastname,
+  date,
+  time,
+  doctorName
+) => {
+  const text = `Dear ${firstname} ${lastname},
+
+We regret to inform you that your medical appointment scheduled on ${date} at ${time} has been canceled by Dr. ${doctorName} due to unforeseen circumstances.
+
+We sincerely apologize for the inconvenience caused.
+
+Please feel free to reschedule at your convenience.
+
+Best regards,
+The support team`;
+
+  await sendEmailrap(to, "Appointment Cancellation Notice", text);
+};
+

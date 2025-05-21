@@ -212,3 +212,43 @@ export const getDisponibilitesByMedecin = asyncHandler(async (req, res) => {
 });
 
 
+export const searchMedecinsByDisponibilite = asyncHandler(async (req, res) => {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ message: "Date is required" });
+  }
+
+  // Trouver tous les médecins qui ont des disponibilités à cette date
+  const disponibilites = await Availability.findAll({
+    where: { date },
+    include: [{
+      model: Medecin,
+      as: 'medecin',
+      attributes: ['id', 'firstname', 'lastname', 'specialite', 'address', 'photo']
+    }],
+    order: [["startTime", "ASC"]],
+  });
+
+  // Grouper par médecin et formater la réponse
+  const medecinsMap = new Map();
+  disponibilites.forEach(dispo => {
+    if (!medecinsMap.has(dispo.medecin.id)) {
+      medecinsMap.set(dispo.medecin.id, {
+        ...dispo.medecin.dataValues,
+        availabilities: []
+      });
+    }
+    medecinsMap.get(dispo.medecin.id).availabilities.push({
+      date: dispo.date,
+      startTime: dispo.startTime,
+      endTime: dispo.endTime
+    });
+  });
+
+  const medecins = Array.from(medecinsMap.values());
+
+  res.status(200).json(medecins);
+});
+
+

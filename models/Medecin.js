@@ -77,6 +77,11 @@ const Medecin = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
+    biography: {
+      type: DataTypes.TEXT,
+      allowNull: true, 
+    },
+    
     
   },
   {

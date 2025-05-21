@@ -35,26 +35,31 @@ export const updateProfile = asyncHandler(async (req, res) => {
     throw new Error("Médecin non trouvé");
   }
 
-
-  const { firstname, lastname, email, phone, specialite, dateOfBirth, licenseNumber } = req.body;
-
+  const {
+    firstname,
+    lastname,
+    email,
+    phone,
+    specialite,
+    dateOfBirth,
+    licenseNumber,
+    biography, // <-- ajouté ici
+  } = req.body;
 
   medecin.firstname = firstname || medecin.firstname;
   medecin.lastname = lastname || medecin.lastname;
   medecin.email = email || medecin.email;
   medecin.phone = phone || medecin.phone;
   medecin.specialite = specialite || medecin.specialite;
-  medecin.dateOfBirth = dateOfBirth || medecin.dateOfBirth; 
-  medecin.licenseNumber = licenseNumber || medecin.licenseNumber; 
-   
+  medecin.dateOfBirth = dateOfBirth || medecin.dateOfBirth;
+  medecin.licenseNumber = licenseNumber || medecin.licenseNumber;
+  medecin.biography = biography || medecin.biography; // <-- ajout de la mise à jour de biography
 
-
-  
   await medecin.save();
 
-  
   res.status(200).json({ message: "Profil mis à jour avec succès", medecin });
 });
+
 /**
  * @desc Changer le mot de passe
  * @route PUT /api/medecins/password
@@ -117,7 +122,6 @@ export const searchMedecins = asyncHandler(async (req, res) => {
     availabilityClause.date = date;
   }
 
-  // Étape 1 : compter les médecins (distincts)
   const count = await Medecin.count({
     where: whereClause,
     include: [
@@ -175,6 +179,10 @@ export const searchMedecins = asyncHandler(async (req, res) => {
     medecins,
   });
 });
+
+
+
+
 
 
 

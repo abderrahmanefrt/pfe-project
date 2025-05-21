@@ -4,7 +4,7 @@ import User from "../models/Users.js";
 import Medecin from "../models/Medecin.js";
 import Availability from "../models/Availability.js";
 import { sendEmailapp } from "../utils/email.js"
-import { sendEmailrap } from "../utils/email.js"
+import { sendEmailrap ,sendCancellationEmail } from "../utils/email.js"
 import { Op, Sequelize } from 'sequelize';
 
 /**  
@@ -519,6 +519,60 @@ export const getBookedAppointments = asyncHandler(async (req, res) => {
 
   const bookedTimes = appointments.map((appt) => appt.time);
   res.json({ bookedTimes });
+});
+
+export const getAcceptedAppointments = asyncHandler(async (req, res) => {
+  const medecinId = req.user.id;
+
+  const appointments = await Appointment.findAll({
+    where: { 
+      medecinId,
+      status: 'accepter' 
+    },
+    include: [
+      { model: User, attributes: ["id", "firstname", "lastname", "email"] },
+    ],
+  });
+
+  res.status(200).json(appointments);
+});
+
+
+
+
+export const deleteAppointmentByDoctor = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const medecinId = req.user.id;
+
+  const appointment = await Appointment.findByPk(id, {
+    include: [{ model: User, as: "User" }],
+  });
+
+  if (!appointment) {
+    return res.status(404).json({ message: "Appointment not found." });
+  }
+
+  if (appointment.medecinId !== medecinId) {
+    return res.status(403).json({ message: "Access denied." });
+  }
+
+  const patient = appointment.User;
+
+  // Envoi d'un email d'excuse
+  await sendCancellationEmail(
+    patient.email,
+    patient.firstname,
+    patient.lastname,
+    appointment.date,
+    appointment.time,
+    req.user.name
+  );
+  
+  
+
+  await appointment.destroy();
+
+  res.status(200).json({ message: "Appointment cancelled and patient notified via email." });
 });
 
 

@@ -82,6 +82,7 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     dateOfBirth,
     licenseNumber,
     address, 
+    biography
   } = req.body;
   console.log("Fichiers reçus :", req.files);
 
@@ -135,6 +136,7 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     address: clean(address),
     latitude,
     longitude,
+    biography: clean(biography),
     document: req.files["document"][0].path,
     photo: req.files["photo"][0].path,
   };
