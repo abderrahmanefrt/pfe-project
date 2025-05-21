@@ -36,10 +36,11 @@ const __dirname = dirname(__filename);
 
 
 app.use(cors({
-  origin: 'http://localhost:5173', // ou l'URL de ton frontend
+  origin: (origin, callback) => {
+    callback(null, origin); // Autorise dynamiquement toutes les origines
+  },
   credentials: true
 }));
-
 
 app.use(express.json());
 app.use(cookieParser());

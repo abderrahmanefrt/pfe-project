@@ -187,7 +187,6 @@ export const searchMedecins = asyncHandler(async (req, res) => {
 
 
 
-
 export const getMedecinsProches = asyncHandler(async (req, res) => {
   const { latitude, longitude, distance = 10 } = req.query;
 
