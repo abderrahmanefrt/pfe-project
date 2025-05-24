@@ -35,11 +35,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://dainty-centaur-972ebd.netlify.app'
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173', // ou l'URL de ton frontend
+  origin: function (origin, callback) {
+    // autoriser les appels sans origine (comme les outils serveur à serveur)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
-
 
 app.use(express.json());
 app.use(cookieParser());
