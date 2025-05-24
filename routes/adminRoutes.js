@@ -12,7 +12,7 @@ import { protect } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
 /** MÉDECINS */
-router.get("/medecins", protect,admin, getAllMedecins);
+router.get("/medecins", getAllMedecins);
 router.get("/medecins/:id",protect, admin, getMedecinById);
 router.put("/medecins/:id", protect,admin, updateMedecin);
 router.delete("/medecins/:id",protect, admin, deleteMedecin);
