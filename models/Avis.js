@@ -43,7 +43,7 @@ const Avis = sequelize.define("Avis", {
   },
 });
 
-Avis.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
-Avis.belongsTo(Medecin, { foreignKey: "medecinId", onDelete: "CASCADE" });
+Avis.belongsTo(User, { foreignKey: "userId" });
+Avis.belongsTo(Medecin, { foreignKey: "medecinId" });
 
 export default Avis;

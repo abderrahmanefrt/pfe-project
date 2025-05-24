@@ -194,6 +194,8 @@ export const getAllAvis = asyncHandler(async (req, res) => {
   res.status(200).json(avis);
 });
 
+
+
 export const deleteAvis = asyncHandler(async (req, res) => {
   const avis = await Avis.findByPk(req.params.id);
   if (!avis) return res.status(404).json({ message: "Avis introuvable." });

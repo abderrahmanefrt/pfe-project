@@ -119,3 +119,43 @@ export const getAverageRating = async (req, res) => {
     res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 };
+
+
+
+
+export const getPendingAvis = asyncHandler(async (req, res) => {
+  try {
+    const avis = await Avis.findAll({
+      where: { status: "pending" },
+      include: [
+        { model: User, attributes: ["firstname"] },
+        { model: Medecin, attributes: ["firstname", "lastname"] },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+    res.json(avis);
+  } catch (err) {
+    console.error('Erreur getPendingAvis:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+
+export const updateAvisStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status value" });
+  }
+
+  const avis = await Avis.findByPk(req.params.id);
+  if (!avis) {
+    return res.status(404).json({ message: "Avis not found" });
+  }
+
+  avis.status = status;
+  await avis.save();
+
+  res.json({ message: `Avis ${status}` });
+});

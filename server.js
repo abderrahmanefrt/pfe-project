@@ -36,7 +36,7 @@ const __dirname = dirname(__filename);
 
 
 app.use(cors({
-  origin: 'http://localhost:5174', // ou l'URL de ton frontend
+  origin: 'http://localhost:5173', // ou l'URL de ton frontend
   credentials: true
 }));
 
