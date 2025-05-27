@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Availability from "../models/Availability.js";
 import { Op } from "sequelize";
+import Appointment from "../models/Appointment.js";
 
 
 export const addDisponibilite = asyncHandler(async (req, res) => {
@@ -163,15 +164,46 @@ export const updateDisponibilite = asyncHandler(async (req, res) => {
 
 
 export const deleteDisponibilite = asyncHandler(async (req, res) => {
-  const disponibilite = await Availability.findByPk(req.params.id);
+  try {
+    console.log("Tentative de suppression de disponibilité");
+    console.log("ID reçu:", req.params.id);
+    console.log("User ID:", req.user.id);
 
-  if (!disponibilite || disponibilite.medecinId !== req.user.id) {
-    return res.status(404).json({ message: "Disponibilité non trouvée." });
+    const disponibilite = await Availability.findByPk(req.params.id);
+
+    if (!disponibilite) {
+      console.log("Disponibilité non trouvée");
+      return res.status(404).json({ message: "Disponibilité non trouvée." });
+    }
+
+    console.log("Disponibilité trouvée:", disponibilite.toJSON());
+
+    if (disponibilite.medecinId !== req.user.id) {
+      console.log("Accès refusé - ID médecin ne correspond pas");
+      return res.status(403).json({ message: "Non autorisé à supprimer cette disponibilité." });
+    }
+
+    // Supprimer d'abord les rendez-vous associés
+    await Appointment.destroy({
+      where: { availabilityId: disponibilite.id }
+    });
+
+    // Ensuite supprimer la disponibilité
+    await disponibilite.destroy();
+    console.log("Disponibilité supprimée avec succès");
+    res.status(200).json({ message: "Disponibilité et rendez-vous associés supprimés avec succès." });
+
+  } catch (error) {
+    console.error("Erreur détaillée lors de la suppression:", error);
+    res.status(500).json({ 
+      message: "Erreur serveur lors de la suppression", 
+      error: error.message,
+      stack: error.stack 
+    });
   }
-
-  await disponibilite.destroy();
-  res.status(200).json({ message: "Disponibilité supprimée avec succès." });
 });
+
+
 
 
 export const getDisponibilitesByMedecin = asyncHandler(async (req, res) => {
