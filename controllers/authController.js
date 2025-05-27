@@ -3,8 +3,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/Users.js";
 import Medecin from "../models/Medecin.js";
-import { sendEmail } from "../utils/email.js"
+import { sendEmail  } from "../utils/email.js"
 import { getCoordinatesFromAddress } from "../utils/geolocate.js";
+import { sendOTPEmail } from "../utils/email.js";
+
 import fetch from 'node-fetch';
 
 
@@ -16,6 +18,11 @@ const generateAccessToken = (payload) => {
 const generateRefreshToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 };
+
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString(); // Génère un code à 6 chiffres
+}
+
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { firstname,lastname, email, phone, password, gender, dateOfBirth ,address} = req.body;
@@ -43,6 +50,9 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  const otp = generateOtp();
+const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // expire dans 10 min
+
 
   const newUser = await User.create({ 
     firstname, 
@@ -55,11 +65,23 @@ export const registerUser = asyncHandler(async (req, res) => {
     address,
     latitude,
     longitude,
+    otp,
+  otpExpiresAt,
+  isVerified: false,
+  role: 'user',
   });
+  await sendOTPEmail(email, firstname, otp);
 
   await sendEmail(email, firstname);
-
-  res.status(201).json({ message: "Utilisateur créé avec succès", user: newUser });
+  res.status(201).json({
+    message: "Utilisateur créé avec succès",
+    user: {
+      id: newUser.id,
+      email: newUser.email,
+      role: 'user', 
+    }
+  });
+  
 });
 
 
@@ -119,7 +141,8 @@ export const registerMedecin = asyncHandler(async (req, res) => {
 
   // Hashage du mot de passe
   const hashedPassword = await bcrypt.hash(password, 10);
-
+  const otp = generateOtp();
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
   // Fonction pour nettoyer les guillemets parasites
   const clean = (val) => typeof val === "string" ? val.replace(/^"|"$/g, "") : val;
 
@@ -139,12 +162,31 @@ export const registerMedecin = asyncHandler(async (req, res) => {
     biography: clean(biography),
     document: req.files["document"][0].path,
     photo: req.files["photo"][0].path,
+    otp,
+  otpExpiresAt,
+  isVerified: false,
+  role: 'medecin',
   };
+
 
   // Création du médecin avec les données nettoyées
   const newMedecin = await Medecin.create(cleanedData);
 
-  res.status(201).json({ message: "Médecin créé avec succès", medecin: newMedecin });
+  try {
+    await sendOTPEmail(email, firstname, otp); // à condition que la fonction soit importée
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de l'email OTP :", error);
+  }
+  
+
+  res.status(201).json({
+    message: "Médecin créé avec succès",
+    medecin: {
+      id: newMedecin.id,
+      email: newMedecin.email,
+      role: 'medecin', // 👈 Ajout dans la réponse
+    }
+  });
 });
 
 
@@ -231,6 +273,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -280,6 +323,61 @@ export const refreshToken = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(403).json({ message: "Refresh token invalide ou expiré." });
   }
+});
+
+
+
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const { email, otp, role } = req.body;
+
+  // Log the incoming request body
+  console.log("Verify OTP Request Body:", req.body);
+
+  if (!email || !otp || !role) {
+    console.log("Validation Failed: Email, OTP, or Role missing"); // Log validation failure
+    return res.status(400).json({ message: "Email, OTP et rôle sont requis" });
+  }
+
+  const model = role === "medecin" ? Medecin : User;
+  // Log which model is being used
+  console.log("Using model:", role);
+
+  const user = await model.findOne({ where: { email } });
+  // Log the result of the user lookup
+  console.log("User found:", user ? user.id : "None");
+
+  if (!user) {
+    console.log("Verification Failed: User not found for email", email); // Log user not found
+    return res.status(404).json({ message: "Utilisateur non trouvé" });
+  }
+
+  if (user.isVerified) {
+    console.log("Verification Failed: Account already verified for user", user.id); // Log already verified
+    return res.status(400).json({ message: "Compte déjà vérifié" });
+  }
+
+  // Log the received OTP and stored OTP for comparison
+  console.log(`Received OTP: ${otp}, Stored OTP: ${user.otp}`);
+  if (user.otp !== otp) {
+    console.log("Verification Failed: Incorrect OTP for user", user.id); // Log incorrect OTP
+    return res.status(400).json({ message: "OTP incorrect" });
+  }
+
+  // Log the expiration date comparison
+  console.log(`Current Time: ${new Date()}, OTP Expires At: ${user.otpExpiresAt}`);
+  if (new Date() > user.otpExpiresAt) {
+    console.log("Verification Failed: OTP expired for user", user.id); // Log expired OTP
+    return res.status(400).json({ message: "OTP expiré" });
+  }
+
+  user.isVerified = true;
+  user.otp = null;
+  user.otpExpiresAt = null;
+  await user.save();
+  // Log successful verification
+  console.log("Account verified successfully for user", user.id);
+
+  res.status(200).json({ message: "Compte vérifié avec succès" });
 });
 
 

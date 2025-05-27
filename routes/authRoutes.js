@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { registerUser, loginUser, registerMedecin,refreshToken  } from "../controllers/authController.js";
+import { registerUser, loginUser, registerMedecin,refreshToken,verifyOtp  } from "../controllers/authController.js";
 import { loginAdmin } from "../controllers/adminAuthController.js";
 import upload from "../middlewares/uploads.js"; 
 
@@ -22,6 +22,9 @@ router.post(
   ]),
   registerMedecin
 );
+
+router.post("/verify-otp", verifyOtp);
+
 
 
 export default router;

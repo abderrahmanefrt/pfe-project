@@ -81,6 +81,20 @@ const Medecin = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true, 
     },
+    otp: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    otpExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    
     
     
   },

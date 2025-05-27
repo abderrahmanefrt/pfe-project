@@ -108,3 +108,16 @@ The support team`;
   await sendEmailrap(to, "Appointment Cancellation Notice", text);
 };
 
+export const sendOTPEmail = async (to, firstname, otp) => {
+  const subject = "Code de vérification";
+  const message = `Bonjour ${firstname},\n\nVoici votre code de vérification : ${otp}\nIl est valable pendant 10 minutes.`;
+
+  // Utilise ta logique nodemailer ici
+  await transporter.sendMail({
+    from: process.env.MAIL_USER,
+    to,
+    subject,
+    text: message,
+  });
+};
+

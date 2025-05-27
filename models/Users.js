@@ -58,7 +58,21 @@ const User = sequelize.define("User", {
   longitude: {
     type: DataTypes.FLOAT,
     allowNull: true,
-  }
+  },
+  otp: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  otpExpiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  
 }, { timestamps: true });
 
 export default User;
