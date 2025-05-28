@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "render-setup": "cp .env.render .env"
+    "render-setup": "cp .env.render .env",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",

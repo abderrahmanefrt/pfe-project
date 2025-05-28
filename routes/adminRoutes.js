@@ -7,7 +7,6 @@ import {
 } from "../controllers/adminController.js";
 import { admin } from "../middlewares/authMiddleware.js"; 
 import { protect } from "../middlewares/authMiddleware.js";
-import { testCronJob } from "../utils/cronJobs.js";
 
 
 const router = express.Router();

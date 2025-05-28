@@ -28,6 +28,10 @@ import "./models/relations.js";
 
 dotenv.config();
 
+// Forcer le mode production sur Render
+process.env.NODE_ENV = 'production';
+console.log("Mode:", process.env.NODE_ENV);
+
 const app = express();
 
 const port = process.env.PORT || 3000;
@@ -103,10 +107,11 @@ sequelize.sync({ alter: true })
 
 // Démarrage serveur
 app.listen(port, () => {
-  console.log(`Serveur démarré sur le port ${port}`);
+  console.log(`🚀 Serveur démarré en mode ${process.env.NODE_ENV} sur le port ${port}`);
+  console.log(`⏰ Cron job configuré pour s'exécuter tous les jours à 11h00`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`⚠️ Le port ${port} est déjà utilisé. Change-le dans .env ou libère le port.`);
+    console.error(`⚠️ Le port ${port} est déjà utilisé.`);
     process.exit(1);
   } else {
     throw err;
