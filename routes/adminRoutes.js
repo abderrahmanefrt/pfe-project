@@ -7,6 +7,7 @@ import {
 } from "../controllers/adminController.js";
 import { admin } from "../middlewares/authMiddleware.js"; 
 import { protect } from "../middlewares/authMiddleware.js";
+import { testCronJob } from "../utils/cronJobs.js";
 
 
 const router = express.Router();
@@ -33,5 +34,15 @@ router.delete("/avis/:id", protect,admin, deleteAvis);
 
 router.get("/stats", protect, admin, getAdminStats);
 
+// Route pour tester manuellement le cron job
+router.get("/test-cron", async (req, res) => {
+  try {
+    await testCronJob();
+    res.json({ message: "Test du cron job effectué avec succès" });
+  } catch (error) {
+    console.error("Erreur lors du test du cron job:", error);
+    res.status(500).json({ error: "Erreur lors du test du cron job" });
+  }
+});
 
 export default router;
