@@ -9,7 +9,7 @@ import 'moment-timezone';
 // Configuration du fuseau horaire
 moment.tz.setDefault('Africa/Algiers'); // Fuseau horaire de l'Algérie
 
-cron.schedule("30 12 * * *", async () => {
+cron.schedule("10 13 * * *", async () => {
   try {
     const currentTime = moment().tz('Africa/Algiers');
     console.log("🕒 Vérification des rendez-vous...");
