@@ -9,17 +9,19 @@ cron.schedule("* * * * *", async () => {
   try {
     console.log("🕒 Vérification des rendez-vous dans 24h...");
 
-    const startOfDay = moment().add(1, "days").startOf("day").utc().format();
-    const endOfDay = moment().add(1, "days").endOf("day").utc().format();
+    // Obtenir la date de demain au format YYYY-MM-DD
+    const tomorrow = moment().add(1, "days").format("YYYY-MM-DD");
+    console.log("Date recherchée:", tomorrow);
 
     const appointments = await Appointment.findAll({
       where: {
-        date: {
-          [Op.between]: [startOfDay, endOfDay],
-        },
+        date: tomorrow,
+        status: "accepter" // Ne vérifier que les rendez-vous acceptés
       },
-      include: [{ model: User, attributes: ["email", "firstname","lastname"] }],
+      include: [{ model: User, attributes: ["email", "firstname", "lastname"] }],
     });
+
+    console.log(`Nombre de rendez-vous trouvés pour demain: ${appointments.length}`);
 
     if (appointments.length === 0) {
       console.log("✅ Aucun rendez-vous à rappeler.");
@@ -30,10 +32,11 @@ cron.schedule("* * * * *", async () => {
 
     for (const appointment of appointments) {
       const { email, firstname } = appointment.User;
+      console.log(`Traitement du rendez-vous pour ${firstname} (${email}) le ${appointment.date} à ${appointment.time}`);
 
-      if (!sentEmails.has(email)) { // Vérifie si l'email a déjà été envoyé
+      if (!sentEmails.has(email)) {
         const subject = "📅 Reminder for your medical appointment";
-      const message = `
+        const message = `
 Hello ${firstname},  
 
 ✨ This is a reminder to inform you that you have a medical appointment scheduled for tomorrow.  
@@ -45,13 +48,14 @@ Best regards,
 The medical team.`;
 
         await sendEmailrap(email, subject, message);
-        console.log(`📩 Email envoyé à ${email} pour un rendez-vous le ${moment(appointment.date).format("DD/MM/YYYY à HH:mm")}`);
+        console.log(`📩 Email envoyé à ${email} pour un rendez-vous le ${appointment.date} à ${appointment.time}`);
         
-        sentEmails.add(email); // Marque cet email comme envoyé
+        sentEmails.add(email);
       }
     }
   } catch (error) {
     console.error("❌ Erreur lors de l'envoi des rappels :", error);
+    console.error("Détails de l'erreur:", error.stack);
   }
 });
 
