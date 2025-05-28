@@ -87,6 +87,7 @@ app.use(errorHandler);
 try {
   await sequelize.authenticate();
   console.log('✅ Connexion à la base réussie.');
+  console.log('Base de données utilisée:', process.env.DATABASE_URL);
 } catch (error) {
   console.error('❌ Connexion échouée :', error);
 }
