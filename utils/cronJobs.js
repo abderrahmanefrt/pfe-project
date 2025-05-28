@@ -13,10 +13,25 @@ cron.schedule("* * * * *", async () => {
     const tomorrow = moment().add(1, "days").format("YYYY-MM-DD");
     console.log("Date recherchée:", tomorrow);
 
+    // D'abord, afficher tous les rendez-vous pour vérifier
+    const allAppointments = await Appointment.findAll({
+      where: {
+        status: "accepter"
+      },
+      include: [{ model: User, attributes: ["email", "firstname", "lastname"] }],
+    });
+
+    console.log("Tous les rendez-vous acceptés:", allAppointments.map(apt => ({
+      date: apt.date,
+      time: apt.time,
+      status: apt.status
+    })));
+
+    // Ensuite, chercher les rendez-vous pour demain
     const appointments = await Appointment.findAll({
       where: {
         date: tomorrow,
-        status: "accepter" // Ne vérifier que les rendez-vous acceptés
+        status: "accepter"
       },
       include: [{ model: User, attributes: ["email", "firstname", "lastname"] }],
     });
