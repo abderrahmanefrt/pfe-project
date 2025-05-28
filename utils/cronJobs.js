@@ -5,7 +5,7 @@ import User from "../models/Users.js";
 import { Op } from "sequelize";
 import moment from "moment";
 
-cron.schedule("0 12 * * *", async () => {
+cron.schedule("* * * * *", async () => {
   try {
     console.log("🕒 Vérification des rendez-vous dans 24h...");
 
