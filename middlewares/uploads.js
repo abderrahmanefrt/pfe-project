@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import multer from "multer";
-import cloudinary from '../config/cloudinary.js';
 
 const documentDir = "uploads/documents";
 const photoDir = "uploads/photos";
@@ -94,13 +93,9 @@ const uploadToCloudinary = async (req, res, next) => {
   }
 };
 
-export const uploadMedecinFiles = [
-  upload.fields([
-    { name: "document", maxCount: 1 },
-    { name: "photo", maxCount: 1 },
-  ]),
-  handleUploadErrors,
-  uploadToCloudinary
-];
+export const uploadMedecinFiles = upload.fields([
+  { name: "document", maxCount: 1 },
+  { name: "photo", maxCount: 1 },
+]);
 
 export default upload;
