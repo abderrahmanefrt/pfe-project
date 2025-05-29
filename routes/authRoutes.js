@@ -2,7 +2,9 @@ import express from "express";
 import multer from "multer";
 import { registerUser, loginUser, registerMedecin,refreshToken,verifyOtp  } from "../controllers/authController.js";
 import { loginAdmin } from "../controllers/adminAuthController.js";
-import upload from "../middlewares/uploads.js"; 
+
+import { uploadMedecinFiles } from "../middlewares/uploads.js";
+
 
 const router = express.Router();
 
@@ -16,10 +18,7 @@ router.get("/refresh-token", refreshToken);
 
 router.post(
   "/medecin/register",
-  upload.fields([
-    { name: "document", maxCount: 1 },
-    { name: "photo", maxCount: 1 }
-  ]),
+  uploadMedecinFiles,
   registerMedecin
 );
 
