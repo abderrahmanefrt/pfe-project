@@ -2,6 +2,9 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 import userRoutes from "./routes/userRoutes.js";
 import medRoutes from "./routes/medRoutes.js";
@@ -14,13 +17,6 @@ import availabilityRoutes from "./routes/availabilityRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import upload from "./middlewares/uploads.js";
 import contactRoutes from "./routes/contactRoutes.js";
-
-
-
-import path from "path";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
 
 import sequelize from "./config/db.js";
 import "./utils/cronJobs.js";
@@ -38,7 +34,6 @@ const port = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-
 const allowedOrigins = [
   'http://localhost:5173',
   'https://dainty-centaur-972ebd.netlify.app'
@@ -46,7 +41,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // autoriser les appels sans origine (comme les outils serveur à serveur)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -59,6 +53,36 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+const uploadsPath = path.join(__dirname, 'uploads');
+console.log("📁 Chemin des uploads:", uploadsPath);
+
+app.use('/uploads', express.static(uploadsPath, {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
+
+app.get('/api/test-uploads', async (req, res) => {
+  try {
+    const fs = await import('fs/promises');
+    const files = await fs.readdir(uploadsPath);
+    res.json({
+      message: "Dossier uploads accessible",
+      path: uploadsPath,
+      files: files
+    });
+  } catch (error) {
+    console.error("Erreur lors de la lecture du dossier uploads:", error);
+    res.status(500).json({
+      error: "Erreur lors de la lecture du dossier uploads",
+      details: error.message
+    });
+  }
+});
 
 app.get('/', (req, res) => {
   res.send('Bienvenue sur l\'API de prise de rendez-vous 🚀');
@@ -69,10 +93,7 @@ app.get('/api', (req, res) => {
 app.get("/api/auth/test", (req, res) => {
   res.json({ message: "Auth route OK" });
 });
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-
-// 🛠 Routes principales
 app.use("/api/users", userRoutes);
 app.use("/api/medecin", medRoutes);
 app.use("/api/appointments", appointmentRoutes);
@@ -83,11 +104,8 @@ app.use("/api/auth", authRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/contact", contactRoutes);
 
-
-// 🛠 Middleware erreurs
 app.use(errorHandler);
 
-// Connexion à la base
 try {
   await sequelize.authenticate();
   console.log('✅ Connexion à la base réussie.');
@@ -96,7 +114,6 @@ try {
   console.error('❌ Connexion échouée :', error);
 }
 
-// Synchronisation
 sequelize.sync({ alter: true })
   .then(() => {
     console.log("✅ Modèles synchronisés.");
@@ -105,10 +122,9 @@ sequelize.sync({ alter: true })
     console.error("❌ Erreur de synchronisation :", err);
   });
 
-// Démarrage serveur
 app.listen(port, () => {
   console.log(`🚀 Serveur démarré en mode ${process.env.NODE_ENV} sur le port ${port}`);
-  console.log(`⏰ Cron job configuré pour s'exécuter tous les jours à 11h00`);
+  console.log(`📁 Dossier uploads: ${uploadsPath}`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`⚠️ Le port ${port} est déjà utilisé.`);

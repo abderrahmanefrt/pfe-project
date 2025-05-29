@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import multer from "multer";
+import cloudinary from '../config/cloudinary.js';
 
 const documentDir = "uploads/documents";
 const photoDir = "uploads/photos";
@@ -41,8 +42,65 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-export const uploadMedecinFiles = upload.fields([
-  { name: "document", maxCount: 1 },
-  { name: "photo", maxCount: 1 },
-]);
+// Middleware pour gérer les erreurs d'upload
+const handleUploadErrors = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: "Le fichier est trop volumineux (max 5 Mo)" });
+    }
+    return res.status(400).json({ error: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+};
+
+// Middleware pour uploader vers Cloudinary
+const uploadToCloudinary = async (req, res, next) => {
+  try {
+    if (!req.files) return next();
+
+    // Traiter les photos
+    if (req.files.photo) {
+      for (const file of req.files.photo) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'medecins/photos',
+          resource_type: 'image'
+        });
+        req.body.photo = result.secure_url;
+        // Supprimer le fichier temporaire
+        fs.unlinkSync(file.path);
+      }
+    }
+
+    // Traiter les documents
+    if (req.files.document) {
+      for (const file of req.files.document) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'medecins/documents',
+          resource_type: 'raw'
+        });
+        req.body.document = result.secure_url;
+        // Supprimer le fichier temporaire
+        fs.unlinkSync(file.path);
+      }
+    }
+
+    next();
+  } catch (error) {
+    console.error('Erreur lors de l\'upload vers Cloudinary:', error);
+    return res.status(500).json({ error: "Erreur lors de l'upload des fichiers" });
+  }
+};
+
+export const uploadMedecinFiles = [
+  upload.fields([
+    { name: "document", maxCount: 1 },
+    { name: "photo", maxCount: 1 },
+  ]),
+  handleUploadErrors,
+  uploadToCloudinary
+];
+
 export default upload;

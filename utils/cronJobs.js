@@ -50,17 +50,17 @@ cron.schedule("0 */24 * * *", async () => {
         - Heure locale (Algérie): ${currentTime.format('HH:mm:ss')}`);
 
       if (!sentEmails.has(email)) {
-        const subject = "📅 Rappel de votre rendez-vous médical";
+        const subject = "📅 Reminder For Your Appointement";
         const message = `
-Bonjour ${firstname},  
+Hello ${firstname},  
 
-✨ Ceci est un rappel pour vous informer que vous avez un rendez-vous médical prévu pour demain.  
+✨ This is a reminder that you have a medical appointment scheduled for tomorrow.
 
-📍 N'oubliez pas d'être à l'heure.  
-🕒 Si vous avez des questions ou souhaitez annuler, n'hésitez pas à nous contacter.  
+📍 Please make sure to be on time.
+🕒 If you have any questions or wish to cancel, feel free to contact us.
 
-Cordialement,  
-L'équipe médicale.`;
+Kind regards,
+The medical team.`;
 
         await sendEmailrap(email, subject, message);
         console.log(`📩 Email envoyé à ${email} pour un rendez-vous le ${appointment.date} à ${appointment.time}`);
