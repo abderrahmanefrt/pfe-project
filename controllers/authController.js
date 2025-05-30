@@ -32,6 +32,12 @@ export const registerUser = asyncHandler(async (req, res) => {
     return;
   }
 
+  // Nouvelle validation pour le mot de passe
+  if (password.length < 8) {
+    res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères." });
+    return;
+  }
+
   const existingUser = await User.findOne({ where: { email } });
 
   if (existingUser) {
@@ -111,6 +117,11 @@ export const registerMedecin = asyncHandler(async (req, res) => {
   // Validation des champs requis
   if (!firstname || !lastname || !email || !phone || !password || !specialite || !dateOfBirth || !licenseNumber || !address) {
     return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+  }
+
+  // Nouvelle validation pour le mot de passe
+  if (password.length < 8) {
+    return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères." });
   }
 
   // Validation des fichiers
