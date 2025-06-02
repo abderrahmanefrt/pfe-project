@@ -175,6 +175,17 @@ export const blockUser = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Utilisateur bloqué avec succès" });
 });
 
+export const unblockUser = asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.params.id);
+  
+  if (!user) {
+    return res.status(404).json({ message: "Utilisateur non trouvé" });
+  }
+
+  await user.update({ status: "active" });
+
+  res.status(200).json({ message: "Utilisateur débloqué avec succès" });
+});
 
 export const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.params.id);

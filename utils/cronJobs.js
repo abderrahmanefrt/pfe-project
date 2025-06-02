@@ -6,8 +6,7 @@ import { Op } from "sequelize";
 import moment from "moment";
 import 'moment-timezone';
 
-// Configuration du fuseau horaire
-moment.tz.setDefault('Africa/Algiers'); // Fuseau horaire de l'Algérie
+moment.tz.setDefault('Africa/Algiers'); 
 
 cron.schedule("0 */24 * * *", async () => {
   try {
@@ -15,11 +14,10 @@ cron.schedule("0 */24 * * *", async () => {
     console.log("🕒 Vérification des rendez-vous...");
     console.log("⏰ Heure actuelle (Algérie):", currentTime.format('YYYY-MM-DD HH:mm:ss'));
 
-    // Obtenir la date de demain au format YYYY-MM-DD
+    
     const tomorrow = moment().tz('Africa/Algiers').add(1, "days").format("YYYY-MM-DD");
     console.log("📅 Date recherchée:", tomorrow);
 
-    // Chercher les rendez-vous pour demain
     const appointments = await Appointment.findAll({
       where: {
         date: tomorrow,
@@ -28,10 +26,7 @@ cron.schedule("0 */24 * * *", async () => {
       include: [{ model: User, attributes: ["email", "firstname", "lastname"] }],
     });
 
-    console.log(`📊 Statistiques:
-    - Nombre de rendez-vous trouvés: ${appointments.length}
-    - Date de vérification: ${tomorrow}
-    - Heure de vérification (Algérie): ${currentTime.format('HH:mm:ss')}`);
+    
 
     if (appointments.length === 0) {
       console.log("✅ Aucun rendez-vous à rappeler.");
@@ -76,8 +71,8 @@ The medical team.`;
   }
 }, {
   scheduled: true,
-  timezone: "Africa/Algiers" // Spécifier explicitement le fuseau horaire de l'Algérie
+  timezone: "Africa/Algiers" 
 });
 
-console.log("✅ Cron job configuré pour s'exécuter à 12:30 (heure algérienne)");
+
 

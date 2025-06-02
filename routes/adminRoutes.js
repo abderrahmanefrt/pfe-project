@@ -2,7 +2,7 @@ import express from "express";
 import {
   getAllMedecins, getMedecinById,  updateMedecin, deleteMedecin,
   getPendingMedecins, approveMedecin, rejectMedecin,
-  getAllUsers, getUserById, blockUser, deleteUser, 
+  getAllUsers, getUserById, blockUser, unblockUser, deleteUser, 
   getAllAvis, deleteAvis ,getAdminStats 
 } from "../controllers/adminController.js";
 import { admin } from "../middlewares/authMiddleware.js"; 
@@ -24,6 +24,7 @@ router.get("/users", protect, admin, getAllUsers);
 router.get("/users/:id", protect,admin, getUserById);
 
 router.put("/users/:id/block", protect,admin, blockUser);
+router.put("/users/:id/unblock", protect, admin, unblockUser);
 router.delete("/users/:id", protect,admin, deleteUser);
 
 /** AVIS */

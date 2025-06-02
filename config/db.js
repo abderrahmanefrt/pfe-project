@@ -3,25 +3,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Forcer le mode production pour Render
-const isProduction = true;
+// Configuration pour le développement local
+const isProduction = false;
 console.log("Mode:", isProduction ? "Production" : "Development");
-
-if (!process.env.DATABASE_URL) {
-  console.error("❌ DATABASE_URL n'est pas configurée dans les variables d'environnement");
-  process.exit(1);
-}
-
-console.log("URL de la base de données:", process.env.DATABASE_URL ? "Configurée" : "Non configurée");
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: "postgres",
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-  },
   logging: (msg) => console.log("SQL:", msg),
   pool: {
     max: 5,
@@ -38,7 +25,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 sequelize
   .authenticate()
   .then(() => {
-    console.log("✅ Connexion à la base de données réussie");
+    console.log("✅ Connexion à la base de données locale réussie");
   })
   .catch((err) => {
     console.error("❌ Erreur de connexion à la base de données:", err.message);
