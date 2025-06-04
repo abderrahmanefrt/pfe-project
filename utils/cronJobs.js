@@ -8,11 +8,11 @@ import 'moment-timezone';
 
 moment.tz.setDefault('Africa/Algiers'); 
 
-cron.schedule("0 */24 * * *", async () => {
+cron.schedule("0 8 * * *", async () => {
   try {
     const currentTime = moment().tz('Africa/Algiers');
-    console.log("🕒 Vérification des rendez-vous...");
-    console.log("⏰ Heure actuelle (Algérie):", currentTime.format('YYYY-MM-DD HH:mm:ss'));
+    console.log(" Vérification des rendez-vous...");
+    console.log(" Heure actuelle (Algérie):", currentTime.format('YYYY-MM-DD HH:mm:ss'));
 
     
     const tomorrow = moment().tz('Africa/Algiers').add(1, "days").format("YYYY-MM-DD");

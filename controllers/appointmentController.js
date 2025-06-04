@@ -100,9 +100,13 @@ export const createAppointment = asyncHandler(async (req, res) => {
     where: {
       availabilityId,
       date,
-      status: ['pending', 'confirmed']
+      status: {
+        [Op.in]: ['pending', 'confirmed', 'accepter']
+      }
     }
   });
+
+  console.log("Nombre de rendez-vous dans ce créneau:", appointmentsInSlot);
 
   if (appointmentsInSlot >= availability.maxPatient) {
     return res.status(400).json({
@@ -110,25 +114,65 @@ export const createAppointment = asyncHandler(async (req, res) => {
     });
   }
 
-  // Vérifie s’il y a un conflit exact d’horaire
+  // Vérifie si le patient a déjà un rendez-vous avec ce médecin à ce créneau
+  const existingPatientAppointment = await Appointment.findOne({
+    where: {
+      userId,
+      medecinId,
+      date,
+      time: roundedTime,
+      status: {
+        [Op.in]: ['pending', 'confirmed', 'accepter']
+      }
+    }
+  });
+
+  console.log("Rendez-vous existant trouvé:", existingPatientAppointment ? "Oui" : "Non");
+
+  if (existingPatientAppointment) {
+    return res.status(400).json({
+      message: "you are already have an appointment at this time."
+    });
+  }
+
+  // Vérifie s'il y a un conflit exact d'horaire pour le médecin
   const existingAppointments = await Appointment.findAll({
     where: {
       medecinId,
       date,
-      status: ['pending', 'confirmed']
-    },
-    order: [['time', 'ASC']]
+      time: roundedTime,
+      status: {
+        [Op.in]: ['pending', 'confirmed', 'accepter']
+      }
+    }
   });
 
-  for (const app of existingAppointments) {
-    const appStart = timeToMinutes(app.time);
-    const appEnd = appStart + consultationDuration;
+  console.log("Nombre de rendez-vous existants à cette heure:", existingAppointments.length);
 
-    if (reqTime < appEnd && reqTime + consultationDuration > appStart) {
-      return res.status(400).json({
-        message: `Ce créneau est déjà réservé (${app.time})`
-      });
+  if (existingAppointments.length > 0) {
+    return res.status(400).json({
+      message: `Ce créneau est déjà réservé (${roundedTime})`
+    });
+  }
+
+  // Vérifie si le patient a déjà un rendez-vous avec ce médecin ce jour-là
+  const patientAppointmentsToday = await Appointment.findAll({
+    where: {
+      userId,
+      medecinId,
+      date,
+      status: {
+        [Op.in]: ['pending', 'confirmed', 'accepter']
+      }
     }
+  });
+
+  console.log("Nombre de rendez-vous du patient ce jour:", patientAppointmentsToday.length);
+
+  if (patientAppointmentsToday.length > 0) {
+    return res.status(400).json({
+      message: "you already have an appointement today."
+    });
   }
 
   // Calcule le numéro de passage dans la journée (à partir de 08:00)
@@ -198,12 +242,12 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
   const today = new Date(); // Date actuelle
 
   if (req.isPatient) {
-    // Si c'est un patient, on récupère seulement ses futurs rendez-vous
+    
     appointments = await Appointment.findAll({
       where: { 
         userId: req.user.id,
         date: {
-          [Op.gte]: today // uniquement les rendez-vous aujourd'hui ou après
+          [Op.gte]: today 
         }
       },
       include: [
@@ -290,12 +334,12 @@ export const updateAppointment = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Rendez-vous non trouvé." });
   }
 
-  // ⛔ Interdire la modification d’un rendez-vous accepté
+
   if (appointment.status === "accepter") {
     return res.status(403).json({ message: "Rendez-vous déjà accepté, il ne peut plus être modifié." });
   }
 
-  // ✅ Autoriser uniquement le patient à modifier
+  
   if (userRole !== "user" || appointment.userId !== userId) {
     return res.status(403).json({ message: "Accès refusé. Seul le patient peut modifier ce rendez-vous." });
   }
@@ -315,14 +359,14 @@ export const updateAppointment = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Créneau de disponibilité non trouvé." });
   }
 
-  // Vérifier que la date n’est pas passée
+  // Vérifier que la date n'est pas passée
   const today = new Date();
   const availabilityDate = new Date(availability.date);
   if (availabilityDate < today.setHours(0, 0, 0, 0)) {
     return res.status(400).json({ message: "Impossible de déplacer le rendez-vous vers une date passée." });
   }
 
-  // Vérifier que l’heure demandée est bien dans le créneau
+  // Vérifier que l'heure demandée est bien dans le créneau
   const start = new Date(`1970-01-01T${availability.startTime}`);
   const end = new Date(`1970-01-01T${availability.endTime}`);
   const requestedTime = new Date(`1970-01-01T${newTime}`);
@@ -331,17 +375,62 @@ export const updateAppointment = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "L'heure demandée est en dehors du créneau." });
   }
 
-  // Vérifier si un autre rendez-vous existe déjà à cette heure
-  const conflict = await Appointment.findOne({
+  // Vérifie si le patient a déjà un rendez-vous avec ce médecin à ce créneau
+  const existingPatientAppointment = await Appointment.findOne({
     where: {
-      availabilityId,
+      userId,
+      medecinId: appointment.medecinId,
+      date: availability.date,
       time: newTime,
-      id: { [Op.ne]: appointment.id },
+      id: { [Op.ne]: id }, // Exclure le rendez-vous actuel
+      status: {
+        [Op.in]: ['pending', 'confirmed', 'accepter']
+      }
     }
   });
 
-  if (conflict) {
-    return res.status(400).json({ message: "Un autre rendez-vous existe déjà à cette heure." });
+  if (existingPatientAppointment) {
+    return res.status(400).json({
+      message: "you are already have an appointment at this time."
+    });
+  }
+
+  // Vérifie si le patient a déjà un autre rendez-vous avec ce médecin ce jour-là
+  const patientAppointmentsToday = await Appointment.findAll({
+    where: {
+      userId,
+      medecinId: appointment.medecinId,
+      date: availability.date,
+      id: { [Op.ne]: id }, // Exclure le rendez-vous actuel
+      status: {
+        [Op.in]: ['pending', 'confirmed', 'accepter']
+      }
+    }
+  });
+
+  if (patientAppointmentsToday.length > 0) {
+    return res.status(400).json({
+      message: "you already have an appointement today."
+    });
+  }
+
+  // Vérifie si le créneau est déjà plein
+  const appointmentsInSlot = await Appointment.count({
+    where: {
+      availabilityId,
+      date: availability.date,
+      time: newTime,
+      id: { [Op.ne]: id }, // Exclure le rendez-vous actuel
+      status: {
+        [Op.in]: ['pending', 'confirmed', 'accepter']
+      }
+    }
+  });
+
+  if (appointmentsInSlot >= availability.maxPatient) {
+    return res.status(400).json({
+      message: "Le nombre maximal de patients pour ce créneau a été atteint."
+    });
   }
 
   // Mise à jour

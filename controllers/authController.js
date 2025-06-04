@@ -211,7 +211,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       return res.status(401).json({ message: "Email ou mot de passe incorrect" });
     }
   
-    const payload = { role: "admin", id: "admin" }; // Ajout d'un ID fictif
+    const payload = { role: "admin", id: "admin" }; 
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
   
@@ -229,8 +229,8 @@ export const loginUser = asyncHandler(async (req, res) => {
       firstname: "Admin", // Champs requis par le frontend
       lastname: "System",
       email: process.env.ADMIN_EMAIL,
-      phone: "", // Champ vide mais présent
-      specialite: "", // Champ vide mais présent
+      phone: "", 
+      specialite: "", 
       accessToken,
       refreshToken,
       message: "Connexion réussie",
